@@ -17,7 +17,7 @@ function combine(subtitles)
 		end
 	end
 	table.sort(dialogue,function (a,b) return a.start_time < b.start_time or (a.end_time < b.end_time and string.len(a.text) < string.len(b.text)) end)
-	dialogue[0] = dialogue[1]
+	dialogue[0] = {}
 	dialogue[0].end_time = 36000000
 	overlaps = {}
 	normal = {}
