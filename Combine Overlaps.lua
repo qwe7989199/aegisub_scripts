@@ -12,8 +12,9 @@ function combine(subtitles)
 	for i = 1,#subtitles do
 		if subtitles[i].class == "dialogue" and not subtitles[i].comment and subtitles[i].text ~= "" then
 			table.insert(dialogue,subtitles[i])
-			subtitles[i].comment = true
-			subtitles[i] = subtitles[i]
+			line = subtitles[i]
+			line.comment = true
+			subtitles[i] = line
 		end
 	end
 	table.sort(dialogue,function (a,b) return a.start_time < b.start_time or (a.end_time < b.end_time and string.len(a.text) < string.len(b.text)) end)
