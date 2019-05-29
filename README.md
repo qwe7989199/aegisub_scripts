@@ -15,6 +15,8 @@ Check K tags for selected lines, following the rules below:
 Under such condition, the full-width blank should be given a separated K tag.  
 2.Normally, the last syl of a line should not be blank.  
 
-
 ## Time Scaler.lua  
 You can use this if only BPM changed.  
+
+## delete_fx.lua  
+A very simple script to remove fx lines after sorting by effect.  
