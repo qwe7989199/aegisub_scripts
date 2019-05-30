@@ -19,7 +19,7 @@ function time_scaling(subtitles, selected_lines)
 	{class="floatedit",name="new_bpm",x=3,y=1,width=1,height=1,value="",min=0,max=1E4},
 	}
 	cfg_res,config = aegisub.dialog.display(dialog_config)
-	ratio = config.new_bpm/config.org_bpm
+	ratio = config.org_bpm/config.new_bpm
 	if tostring(ratio)=="nan" or tostring(ratio)=="inf" then
 		aegisub.debug.out("Valid BPM required.")
 		aegisub.cancel()
