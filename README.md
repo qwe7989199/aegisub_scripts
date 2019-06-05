@@ -23,3 +23,4 @@ A very simple script to remove fx lines after sorting by effect.
   
 ## template&fx checker.lua  
 A set of basic functions for checking/printing mistakes in template lines and fx lines.  
+Code blocks and most parameters of tags are ignored.  
