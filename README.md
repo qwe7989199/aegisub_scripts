@@ -3,7 +3,7 @@
 ## Add k Tags.lua  
 Generate K by :  
 1.Average  
-2.k1     --Actually you can change 1 to any fixed number you want.
+2.k1     --Actually you can change 1 to any fixed number you want.  
 3.Percentage
 
 ## Combine Overlaps.lua  
