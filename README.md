@@ -19,4 +19,7 @@ Under such condition, the full-width blank should be given a separated K tag.
 You can use this if only BPM changed.  
 
 ## delete_fx.lua  
-A very simple script to remove fx lines after sorting by effect.  
+A very simple script to remove fx lines after sorting by effect.   
+  
+## template&fx checker.lua  
+A set of basic functions for checking/printing mistakes in template lines and fx lines.  
