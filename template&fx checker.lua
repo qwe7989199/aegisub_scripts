@@ -31,7 +31,6 @@ end
 local function tag_counter(tbl)
 	entry_num = {}
 	table.sort(tbl)
-	--aegisub.debug.out(Y.table.tostring(tbl))
 	for k,v in pairs(tbl) do
 		if entry_num[tbl[k]] == nil then
 			entry_num[tbl[k]] = 1
