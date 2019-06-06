@@ -2,9 +2,9 @@ local tr = aegisub.gettext
 script_name = tr"Check Tags"
 script_description = tr"Check tags inside template line or fx line"
 script_author = "domo"
-script_version = "0.9"
+script_version = "0.99"
 script_created = "2019/06/03"
-script_last_updated = "2016/06/05"
+script_last_updated = "2019/06/05"
 
 local position_tags = {"move","pos","mover","moves3","moves4"}
 local work_with_t = {"bord","xbord","ybord","shad","xshad","yshad","be","blur","fs","fscx","fscy",
@@ -90,8 +90,8 @@ local function checknott(tags)
 end
 
 local function checksame(tags,in_t)
-	--in case of fn
-	tags = string.gsub(tags,"\\fn[^\\]*\\","\\fn\\")
+	--in case of fn[string] tag
+	tags = string.gsub(tags,"\\fn[^\\]*\\","\\fn\\") --need to be fixed
 	split_tags = split(tags,"\\")
 	for i=1,#split_tags do
 		split_tags[i] = string.match(split_tags[i],"([%d]?%l+[%d]?)")
@@ -125,6 +125,7 @@ end
 local function checkclip(tag,in_t)
 	if string.find(tag,"m ")~=nil and in_t then
 		aegisub.debug.out("[(i)clip]'s assdrawing format is not supported by t.\n")
+		-- Ignore inline variables
 	elseif string.find(tag,"$")~=nil then
 	else
 		local x1,y1,x2,y2 = string.match(tag,"(-?%d+),(-?%d+),(-?%d+),(-?%d+)")
