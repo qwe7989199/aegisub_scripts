@@ -2,9 +2,9 @@ local tr = aegisub.gettext
 script_name = tr"Check Tags"
 script_description = tr"Check tags inside template line or fx line"
 script_author = "domo"
-script_version = "0.99"
+script_version = "0.9"
 script_created = "2019/06/03"
-script_last_updated = "2019/06/06"
+script_last_updated = "2016/06/05"
 
 local position_tags = {"move","pos","mover","moves3","moves4"}
 local work_with_t = {"bord","xbord","ybord","shad","xshad","yshad","be","blur","fs","fscx","fscy",
@@ -31,6 +31,7 @@ end
 local function tag_counter(tbl)
 	entry_num = {}
 	table.sort(tbl)
+	--aegisub.debug.out(Y.table.tostring(tbl))
 	for k,v in pairs(tbl) do
 		if entry_num[tbl[k]] == nil then
 			entry_num[tbl[k]] = 1
@@ -69,7 +70,7 @@ end
 
 local function checknott(tags)
 	--in case of fn
-	tags = string.gsub(tags,"\\fn[^\\]*\\","\\fn\\")
+	tags = string.gsub(tags,"\\fn[^\\]*}?","\\fn\\")
 	tags = string.gsub(tags,"\\t","")
 	split_tags = split(tags,"\\")
 	for i=1,#split_tags do
@@ -89,7 +90,7 @@ local function checknott(tags)
 end
 
 local function checksame(tags,in_t)
-	--in case of fn[string] tag
+	--in case of fn
 	tags = string.gsub(tags,"\\fn[^\\]*}?","\\fn\\")
 	split_tags = split(tags,"\\")
 	for i=1,#split_tags do
@@ -110,13 +111,21 @@ local function checksame(tags,in_t)
 	
 	for i=1,#position_tags do
 		if entry_num[position_tags[i]] and entry_num[position_tags[i]]>=2 then
-			aegisub.debug.out("["..position_tags[i].."] appears "..entry_num[position_tags[i]].." times in one line.\n")
+			if in_t then
+				aegisub.debug.out("["..position_tags[i].."] appears "..entry_num[position_tags[i]].." times inside one t tag.\n")
+			else
+				aegisub.debug.out("["..position_tags[i].."] appears "..entry_num[position_tags[i]].." times in one line.\n")
+			end
 		end
 	end
 	
 	for i=1,#other_tags do
 		if entry_num[other_tags[i]] and entry_num[other_tags[i]]>=2 then
-			aegisub.debug.out("["..other_tags[i].."] appears "..entry_num[other_tags[i]].." times in one line.\n")
+			if in_t then
+				aegisub.debug.out("["..other_tags[i].."] appears "..entry_num[other_tags[i]].." times inside one t tag.\n")
+			else
+				aegisub.debug.out("["..other_tags[i].."] appears "..entry_num[other_tags[i]].." times in one line.\n")
+			end
 		end
 	end
 end
@@ -124,7 +133,6 @@ end
 local function checkclip(tag,in_t)
 	if string.find(tag,"m ")~=nil and in_t then
 		aegisub.debug.out("[(i)clip]'s assdrawing format is not supported by t.\n")
-		-- Ignore inline variables
 	elseif string.find(tag,"$")~=nil then
 	else
 		local x1,y1,x2,y2 = string.match(tag,"(-?%d+),(-?%d+),(-?%d+),(-?%d+)")
