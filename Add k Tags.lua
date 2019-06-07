@@ -22,7 +22,7 @@ function add_k_percent(subtitles, selected_lines, active_line)
 	k_type = "percentage"
 	dialog_config =	{
 	{class="label",x=2,y=0,width=1,height=1,label="Percent(%):"},
-	{class="edit",name="Percent",x=3,y=0,width=1,height=1,value="100"},
+	{class="intedit",name="Percent",x=3,y=0,width=1,min=1,max=100,height=1,value="100"},
 	}
 	cfg_res,config =_G.aegisub.dialog.display(dialog_config)
 	percent = config.Percent
