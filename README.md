@@ -1,5 +1,9 @@
 # aegisub_scripts
 
+## autoload  
+### enc-hsub-VS.lua
+Encode use vapoursynth+x264/NVEnc/QSVEnc  
+
 ## Add k Tags.lua  
 Generate K by :  
 1.Average  
@@ -24,3 +28,5 @@ A very simple script to remove fx lines after sorting by effect.
 ## template&fx checker.lua  
 A set of basic functions for checking/printing mistakes in template lines and fx lines.  
 Code blocks and most parameters of tags are ignored.  
+
+
