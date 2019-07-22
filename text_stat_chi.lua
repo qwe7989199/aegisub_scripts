@@ -142,10 +142,10 @@ function show_result()
 	{x=1, y=5, width=15, class="label", label="　　时间最长的音节: "..max_k.dur.." (毫秒)   | 行号: "..max_k.line_index},
 	{x=1, y=6, width=15, class="label", label="　　时间最短的音节: "..min_k.dur.." (毫秒)   | 行号: "..min_k.line_index},
 	} 
-	btn, result = aegisub.dialog.display(config,{"OK","Save"})
-	if btn=="Save" then
+	btn, result = aegisub.dialog.display(config,{"关闭","保存"})
+	if btn=="保存" then
 		scriptname=string.sub(aegisub.file_name(),1,-5)
-		file_name=aegisub.dialog.save("保存文件到",aegisub.decode_path("?script").."\\", scriptname.."_stats", "*.csv")
+		file_name=aegisub.dialog.save("保存文件到",aegisub.decode_path("?script").."\\", scriptname.."_stats", "*.csv",false)
 		if not file_name then aegisub.cancel() end
 		file=io.open(file_name,"w")
 		file:write("\239\187\191"
