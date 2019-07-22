@@ -35,39 +35,43 @@ function text_stat(subtitles, selected_lines, active_line)
 	BoundaryKDurOfLine={[0]={max=0,min=36000000}}
 	for z, i in ipairs(selected_lines) do
 		l = subtitles[i]
+		if l.comment==true or string.find(l.effect,"template") or string.find(l.effect,"code") then
+			aegisub.debug.out("Line #"..i-dialogue_start.." ignored.\n")
+		else
 		--Deal with karaoke first
-		if string.find(l.text,"\\[kK][fo]?%d+")~=nil then
-			karaoke=true
-			BoundaryKDurOfLine=k_stat(l.text,i)
-			TotalKNum=TotalKNum+BoundaryKDurOfLine[i].kNum
+			if string.find(l.text,"\\[kK][fo]?%d+")~=nil then
+				karaoke=true
+				BoundaryKDurOfLine=k_stat(l.text,i)
+				TotalKNum=TotalKNum+BoundaryKDurOfLine[i].kNum
+			end
+			--Strip tags
+			text_stripped=string.gsub(l.text,"%{.-%}","")
+			if text_stripped=="" and TotalLineNum==1 then
+				aegisub.debug.out("Only empty line selected.")
+				aegisub.cancel()
+			end
+			--Space number half-width
+			for space in string.gmatch(text_stripped," ") do
+				SpaceNum=SpaceNum+1
+			end
+			--Space number full-width
+			for space in string.gmatch(text_stripped,"　") do
+				SpaceNum=SpaceNum+1
+				fullWidthSpaceNum=fullWidthSpaceNum+1
+			end
+			--English words number
+			for word in string.gmatch(text_stripped,"(%w+)") do
+				EngWordsNum=EngWordsNum+1
+			end
+			--Non English words number
+			for utf8char in string.gmatch(text_stripped,"[%z\194-\244][\128-\191]*") do
+				NonEngCharsNum=NonEngCharsNum+1
+			end
+			--Line length
+			LineLength[i]=unicode.len(text_stripped)
+			--Line duration
+			LineDuration[i]=(l.end_time-l.start_time)/1000
 		end
-		--Strip tags
-		text_stripped=string.gsub(l.text,"%{.-%}","")
-		if text_stripped=="" and TotalLineNum==1 then
-			aegisub.debug.out("Only empty line selected.")
-			aegisub.cancel()
-		end
-		--Space number half-width
-		for space in string.gmatch(text_stripped," ") do
-			SpaceNum=SpaceNum+1
-		end
-		--Space number full-width
-		for space in string.gmatch(text_stripped,"　") do
-			SpaceNum=SpaceNum+1
-			fullWidthSpaceNum=fullWidthSpaceNum+1
-		end
-		--English words number
-		for word in string.gmatch(text_stripped,"(%w+)") do
-			EngWordsNum=EngWordsNum+1
-		end
-		--Non English words number
-		for utf8char in string.gmatch(text_stripped,"[%z\194-\244][\128-\191]*") do
-			NonEngCharsNum=NonEngCharsNum+1
-		end
-		--Line length
-		LineLength[i]=unicode.len(text_stripped)
-		--Line duration
-		LineDuration[i]=(l.end_time-l.start_time)/1000
 	end
 	TotalWordsNum=EngWordsNum+NonEngCharsNum-fullWidthSpaceNum
 	NonEngCharsNum=NonEngCharsNum-fullWidthSpaceNum
