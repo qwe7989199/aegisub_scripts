@@ -30,3 +30,8 @@ A set of basic functions for checking/printing mistakes in template lines and fx
 Code blocks and most parameters of tags are ignored.  
 
 
+## Text_Stat(\_chi).lua    
+Get some statistics from your ass script, like words number and line duration etc.  
+And you can save the information to a text file.  
+You can also treat this as an example of learning _lua pattern_, _unicode(UTF-8)_, _Aegisub Dialog API_, and of course, _file operation_.  
+File with _chi_ is its Chinese version.  
