@@ -127,7 +127,7 @@ function show_result()
 	config = {
     {x=0, y=0, class="label", label="统计结果: "},
 	{x=0, y=1, class="label", label="　　已选择的行数: "..TotalLineNum},
-	{x=0, y=2, class="label", label="　　总持续时间: "..TotalDuration},
+	{x=0, y=2, class="label", label="　　总持续时间: "..TotalDuration.." (s)"},
 	{x=0, y=3, class="label", label="　　总音节数: "..TotalKNum},
 	{x=0, y=4, class="label", label="　　总字数(含空格): "..TotalWordsNum},
 	{x=0, y=5, class="label", label="　　英文字数: "..EngWordsNum},
