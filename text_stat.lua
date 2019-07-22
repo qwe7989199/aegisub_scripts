@@ -145,7 +145,7 @@ function show_result()
 	btn, result = aegisub.dialog.display(config,{"OK","Save"})
 	if btn=="Save" then
 		scriptname=string.sub(aegisub.file_name(),1,-5)
-		file_name=aegisub.dialog.save("Save to",aegisub.decode_path("?script").."\\", scriptname.."_stats", "*.csv")
+		file_name=aegisub.dialog.save("Save to",aegisub.decode_path("?script").."\\", scriptname.."_stats", "*.csv",false)
 		if not file_name then aegisub.cancel() end
 		file=io.open(file_name,"w")
 		file:write("\239\187\191"
