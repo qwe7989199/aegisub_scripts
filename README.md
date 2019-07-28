@@ -35,3 +35,8 @@ Get some statistics from your ass script, like words number and line duration et
 And you can save the information to a text file.  
 You can also treat this as an example of learning _lua pattern_, _unicode(UTF-8)_, _Aegisub Dialog API_, and of course, _file operation_.  
 File with _chi_ suffix is its Chinese version.  
+
+## text to qrcode.lua    
+Requirement:https://github.com/speedata/luaqrcode/blob/master/qrencode.lua  
+Convert line text to qrcode, beta version.  
+
