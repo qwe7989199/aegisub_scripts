@@ -58,6 +58,9 @@ function setting(min_size)
 	}
 	
 	button,config =_G.aegisub.dialog.display(dialog_config,{"OK","Cancel"})
+	if button=="Cancel" then
+		aegisub.cancel()
+	end
 	size=config.Size
 	color=config.Color
 	
