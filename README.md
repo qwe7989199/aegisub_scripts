@@ -38,5 +38,5 @@ File with _chi_ suffix is its Chinese version.
 
 ## text to qrcode.lua    
 Requirement:https://github.com/speedata/luaqrcode/blob/master/qrencode.lua  
-Convert line text to qrcode, beta version.  
-
+Convert line text to QRCode.  
+You can also define the size, transparency and color of the QRCode now.  
