@@ -282,6 +282,13 @@ function encode_vs(subs,sel)
 	
 	-- ffmpeg audio
     if res.audio then
+		file=io.open(ffmpegpath)
+		if not file then 
+			t_error("Cannot locate ffmpeg.exe.",true)
+		else
+			file:close()
+		end
+		
 		if res.trim then
 			vstart=math.max(0,fr2ms(res.sf))
 			vend=math.max(0,fr2ms(res.ef))
@@ -302,7 +309,7 @@ function encode_vs(subs,sel)
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
-				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mp4")
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy  "..quo(target..encname.."_muxed.mp4")
 			else
 				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy "..quo(target..encname.."_muxed.mkv")
 			end
