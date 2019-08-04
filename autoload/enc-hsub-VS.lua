@@ -8,20 +8,17 @@
 	- encode to mp4 or mkv
 	- mux with audio
 	
-	
 	Requirements:
 	
 	- VSPipe.exe and x264.exe
-	- or NVEncC64.exe or QSVEncC64.exe
+	- | NVEncC64.exe | QSVEncC64.exe | VCEEncC64.exe
 	- mkvmerge.exe (for audio mux and mkv)
 	- [vsfilter.dll / vsfiltermod.dll] for hardsubbing
-	
-	
 	
 --]]
 
 script_name="Encode - Hardsub - VapourSynth"
-script_description="Encode a clip with or without hardsubs"
+script_description="Encode a clip w/o hardsubs"
 script_author="domo"
 script_version="1.0"
 
@@ -54,6 +51,7 @@ function encode_vs(subs,sel)
 	VSPipepath=konf:match("VSPipepath:(.-)\n")
 	nvencpath=konf:match("nvencpath:(.-)\n")
 	qsvencpath=konf:match("qsvencpath:(.-)\n")
+	vceencpath=konf:match("vceencpath:(.-)\n")
 	GPUs=konf:match("GPUs:(.-)\n")
 	sett=konf:match("enc_sets:(.-)\n")
 	vsfpath=konf:match("vsfpath:(.-)\n")
@@ -64,14 +62,14 @@ function encode_vs(subs,sel)
 	vsf2=konf:match("filter2:(.-)\n")
 	targ=konf:match("targ:(.-)\n")
 	target=konf:match("target:(.-)\n")
-	msett=konf:match("mocha:(.-)\n")
-	settlist=konf:match("(enc_sets1:.*\n)$") or ""
+	GPUs=konf:match("GPUs:(.-)\n")
     else
 	NegaEncpath=""
 	xpath=""
 	VSPipepath=""
 	nvencpath=""
 	qsvencpath=""
+	vceencpath=""
 	GPUs=""
 	vsfpath=""
 	vsfmpath=""
@@ -154,6 +152,15 @@ function encode_vs(subs,sel)
 			gui("qsvencpath",QSVEncC64_path)
 		end
     end
+	if P=="VCEEncC64" then
+		_,err=io.open(NegaEncLib.."\\VCEEncC64.exe")
+		if err==nil then
+			gui("vceencpath",NegaEncLib.."\\VCEEncC64.exe")
+		else
+			VCEEncC64_path=ADO("VCEEncC64","",scriptpath,"*.exe",false,true)
+			gui("vceencpath",VCEEncC64_path)
+		end
+    end
 	if P=="vsfilter" then
 		_,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\vsfilter.dll")
 		if err==nil then
@@ -192,7 +199,7 @@ function encode_vs(subs,sel)
     end
 
     if P=="Save" then
-	konf="NegaEncpath:"..res.NegaEncpath.."\nxpath:"..res.xpath.."\nVSPipepath:"..res.VSPipepath.."\nnvencpath:"..res.nvencpath.."\nqsvencpath:"..res.qsvencpath.."\nvsfpath:"..res.vsf.."\nvsfmpath:"..res.vsfm.."\nmmgpath:"..res.mmg.."\nvtype:"..res.vtype.."\nfilter1:"..res.filter1.."\nfilter2:"..res.filter2.."\ntarg:"..res.targ.."\ntarget:"..res.target.."\nGPUs:"..res.GPUs.."\n"
+	konf="NegaEncpath:"..res.NegaEncpath.."\nxpath:"..res.xpath.."\nVSPipepath:"..res.VSPipepath.."\nnvencpath:"..res.nvencpath.."\nqsvencpath:"..res.qsvencpath.."\nvceencpath:"..res.vceencpath.."\nvsfpath:"..res.vsf.."\nvsfmpath:"..res.vsfm.."\nmmgpath:"..res.mmg.."\nvtype:"..res.vtype.."\nfilter1:"..res.filter1.."\nfilter2:"..res.filter2.."\ntarg:"..res.targ.."\ntarget:"..res.target.."\nGPUs:"..res.GPUs.."\n"
 
 	file=io.open(enconfig,"w")
 	file:write(konf)
@@ -201,7 +208,7 @@ function encode_vs(subs,sel)
 	ADD({{class="label",label="enc_sets saved to:\n"..enconfig}},{"OK"},{close='OK'})
     end
     P,res=ADD(GUI,
-    {"Encode","NegaEnc","x264","VSPipe","NVEncC64","QSVEncC64","vsfilter","vsfiltermod","mkvmerge","Target","Secondary","Save","Cancel"},{ok='Encode',close='Cancel'})
+    {"Encode","NegaEnc","x264","VSPipe","NVEncC64","QSVEncC64","VCEEncC64","vsfilter","vsfiltermod","mkvmerge","Target","Secondary","Save","Cancel"},{ok='Encode',close='Cancel'})
     until P=="Encode" or P=="Cancel"
     if P=="Cancel" then ak() end
     ----------------------------------------------------------------------------------------------------------------------------------------
@@ -327,6 +334,9 @@ function encode_bat(exe,first_time,from_setting)
 		QSVbitrate=enc_set:match("QSVbitrate:(.-)\n")
 		QSVICQ=enc_set:match("QSVICQ:(.-)\n")
 		QSV_other_para=enc_set:match("QSV_other_para:(.-)\n")
+		VCEpreset=enc_set:match("VCEpreset:(.-)\n")
+		VCEbitrate=enc_set:match("VCEbitrate:(.-)\n")
+		VCE_other_para=enc_set:match("VCE_other_para:(.-)\n")
     else
 		x264crf=23
 		x264preset="medium"
@@ -339,6 +349,9 @@ function encode_bat(exe,first_time,from_setting)
 		QSVbitrate=5000
 		QSVICQ=26.0
 		QSV_other_para=" "
+		VCEpreset="balanced"
+		VCEbitrate=5000
+		VCE_other_para=" "
 	end
 	x264preset_tbl={"ultrafast","superfast","veryfast","faster","fast", "medium", "slow","slower","veryslow","placebo"}
 	dia_x264={
@@ -351,7 +364,7 @@ function encode_bat(exe,first_time,from_setting)
 	{x=0,y=4,class="textbox",name="x264_other_para",text=x264_other_para or " ",height=5,width=5}
 	}
 	
-	NVpreset_tbl={"default", "quality", "performance"}
+	NVpreset_tbl={"performance","default", "quality"}
 	dia_NV={
 	{x=0,y=0,class="label",label="NVEnc enc_set:"},
 	{x=0,y=1,class="label",label="preset:"},
@@ -375,6 +388,17 @@ function encode_bat(exe,first_time,from_setting)
 	{x=1,y=4,class="intedit",name="QSVICQ",value=QSVICQ or 26,min=1,max=51},
 	{x=0,y=5,class="label",label="Custom parameters:"},
 	{x=0,y=6,class="textbox",name="QSV_other_para",text=QSV_other_para or " ",height=5,width=5}
+	}
+	
+	VCEpreset_tbl={"fast","balanced","slow"}
+	dia_VCE={
+	{x=0,y=0,class="label",label="VCEEnc enc_set:"},
+	{x=0,y=1,class="label",label="preset:"},
+	{x=1,y=1,class="dropdown",name="VCEpreset",label="preset:",value=VCEpreset,items=VCEpreset_tbl},
+	{x=0,y=2,class="label",label="bitrate(Kbps):"},
+	{x=1,y=2,class="intedit",name="VCEbitrate",value=VCEbitrate or 5000,min=500,max=20000},
+	{x=0,y=3,class="label",label="Custom parameters:"},
+	{x=0,y=4,class="textbox",name="VCE_other_para",text=VCE_other_para or " ",height=5,width=5}
 	}
 	
 	if exe=="VSPipe+x264" and first_time then
@@ -446,6 +470,26 @@ function encode_bat(exe,first_time,from_setting)
 			ak()
 		end
 	end
+	
+	if exe=="VCEEnc" and first_time then
+		button,result=aegisub.dialog.display(dia_VCE,{"OK","Save","Cancel"})
+		if (button=="Save" or  button=="OK") then 
+			text="VCEpreset:"..result.VCEpreset.."\nVCEbitrate:"..result.VCEbitrate.."\nVCE_other_para:"..result.VCE_other_para.."\n"
+			file=io.open(enc_bat_set,"w")
+			file:write(text)
+			file:close()
+			aegisub.dialog.display({{class="label",label="VCEEnc setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
+			if not from_setting then
+			if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
+			bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.VCEbitrate.." --quality "..result.VCEpreset.." -o "..quo(target..encname..res.vtype)
+			end
+		else
+			ak()
+		end
+	elseif exe=="VCEEnc" and not first_time then
+		if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
+		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." -o "..quo(target..encname..res.vtype)
+	end
 	return bat_code
 end
 
@@ -469,7 +513,7 @@ function time2string(num)
 end
 
 function choose_exe()
-	btn, result = aegisub.dialog.display({{class="label", label="Choose one to configure", x=1, y=0,height=2,width=2}},{"QSVEnc", "NVEnc","x264"})
+	btn, result = aegisub.dialog.display({{class="label", label="Choose one to configure", x=1, y=0,height=2,width=2}},{"QSVEnc", "NVEnc","VCEEnc","x264"})
 	if btn=="x264" then
 		encode_bat("VSPipe+x264",true,true)
 	else
