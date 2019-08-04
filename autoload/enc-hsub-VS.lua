@@ -213,7 +213,7 @@ function encode_vs(subs,sel)
     
     videoname=res.vid
     encname=res.vid2
-    ffmpeg=res.ffmpeg
+    ffmpegpath=res.ffmpeg
     if not dummy_video then
 		target=vpath
 	else
@@ -299,7 +299,7 @@ function encode_vs(subs,sel)
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
-				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mp4")
+				merge=audiosplit.."\n"..quo(ffmpeg).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mp4")
 			else
 				audiofile=target..encname..".mka"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
@@ -443,7 +443,7 @@ function encode_bat(exe,first_time,from_setting)
 			file:close()
 			aegisub.dialog.display({{class="label",label="x264 setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
 			if not from_setting then
-			if VSPipepath=="" or xpath=="" then t_error("Please check your VSPipe and x264.",true) end
+			if res.VSPipepath=="" or res.xpath=="" then t_error("Please check your VSPipe and x264.",true) end
 			bat_code=quo(VSPipepath).." "..quo(scriptpath.."hardsub.vpy").." - --y4m | "..quo(xpath).." --crf "..result.crf.." --preset "..result.x264preset.." "..result.x264_other_para.."--demuxer y4m -o "..quo(target..encname..res.vtype).." -"
 			end
 		else
@@ -463,8 +463,8 @@ function encode_bat(exe,first_time,from_setting)
 			file:close()
 			aegisub.dialog.display({{class="label",label="NVEnc setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
 			if not from_setting then
-			if nvencpath=="" then t_error("Please check your NVEnc.",true) end
-			bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..result.NVbitrate.." --preset "..result.NVpreset.." -o "..quo(target..encname..res.vtype)
+			if res.nvencpath=="" then t_error("Please check your NVEnc.",true) end
+			bat_code=quo(res.nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..result.NVbitrate.." --preset "..result.NVpreset.." -o "..quo(target..encname..res.vtype)
 			end
 		else
 			aegisub.cancel()
@@ -483,11 +483,11 @@ function encode_bat(exe,first_time,from_setting)
 			file:close()
 			aegisub.dialog.display({{class="label",label="QSVEnc setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
 			if not from_setting then
-			if qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
+			if res.qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
 			if result.QSVmode=="VBR" then
-				bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.QSVbitrate.." --quality "..result.QSVpreset.." -o "..quo(target..encname..res.vtype)
+				bat_code=quo(res.qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.QSVbitrate.." --quality "..result.QSVpreset.." -o "..quo(target..encname..res.vtype)
 			elseif result.QSVmode=="ICQ" then
-				bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..result.QSVICQ.." --quality "..result.QSVpreset.." -o "..quo(target..encname..res.vtype)
+				bat_code=quo(res.qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..result.QSVICQ.." --quality "..result.QSVpreset.." -o "..quo(target..encname..res.vtype)
 			end
 			end
 		else
