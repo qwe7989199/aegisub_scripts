@@ -66,8 +66,8 @@ GUI_Config={['avs']=
 	{x=7,y=4,width=3,class="edit",name="vsfm",value=vsfmpath or "",hint="only needed if you're using it"},
 	{x=0,y=5,class="label",label="vsfilter.dll:"},
 	{x=1,y=5,width=5,class="edit",name="vsf",value=vsfpath or ""},
-	{x=6,y=5,class="label",label=" mkvmerge.exe:"},
-	{x=7,y=5,width=3,class="edit",name="mmg",value=mmgpath or "",hint="only needed if you're muxing audio"},
+	{x=6,y=5,class="label",label=" ffmpeg.exe:"},
+	{x=7,y=5,width=3,class="edit",name="ffmpeg",value=ffmpegpath or "",hint="only needed if you're muxing audio"},
 	{x=0,y=6,class="label",label="Target folder:"},
 	{x=1,y=6,width=2,class="dropdown",name="targ",value=targ,items={"Same as source","Custom:"}},
 	{x=3,y=6,width=7,class="edit",name="target",value=target},
@@ -85,10 +85,12 @@ GUI_Config={['avs']=
 	{x=3,y=10,class="label",label="to: "},
 	{x=4,y=10,width=2,class="intedit",name="ef",value=eframe},
 	{x=6,y=10,width=4,class="label",label=" If checked, start and end frames are added to Encode name "},
-	{x=7,y=11,width=1,class="checkbox",name="audio",label="Mux with audio (mp4 will be changed to mkv automatically)",hint="whether you're trimming or not"},
+	{x=7,y=11,width=1,class="checkbox",name="audio",label="Mux with audio (LC AAC by default)",hint="whether you're trimming or not"},
+	{x=8,y=11,width=1,class="checkbox",name="neroaac",label="Use Nero AAC Encoder",value=true},
 	{x=0,y=11,width=1,class="checkbox",name="delbat",label="Delete batch file",value=true},
 	{x=1,y=11,width=2,class="checkbox",name="delavs",label="Delete vapoursynth script",value=false},
 	{x=4,y=11,width=1,class="checkbox",name="delAV",label="Delete A/V after muxing",value=true,hint="Delete audio/video files only needed for muxing"},
 	{x=5,y=11,width=2,class="checkbox",name="pause",label="Keep cmd window open  ",value=true}
 }
+
 }
