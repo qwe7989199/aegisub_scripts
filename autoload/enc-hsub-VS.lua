@@ -56,7 +56,7 @@ function encode_vs(subs,sel)
 	sett=konf:match("enc_sets:(.-)\n")
 	vsfpath=konf:match("vsfpath:(.-)\n")
 	vsfmpath=konf:match("vsfmpath:(.-)\n")
-	mmgpath=konf:match("mmgpath:(.-)\n") or ""
+	ffmpegpath=konf:match("ffmpegpath:(.-)\n") or ""
 	vtype=konf:match("vtype:(.-)\n")
 	vsf1=konf:match("filter1:(.-)\n")
 	vsf2=konf:match("filter2:(.-)\n")
@@ -73,7 +73,7 @@ function encode_vs(subs,sel)
 	GPUs=""
 	vsfpath=""
 	vsfmpath=""
-	mmgpath=""
+	ffmpegpath=""
 	vtype=".mkv"
 	vsf1="vsfilter"
 	vsf2="vsfilter"
@@ -114,8 +114,6 @@ function encode_vs(subs,sel)
 	GUI=GUI_Config.vs
     repeat
 	
-	
-	NegaEncLib=""
 	if P=="NegaEnc" then
 	NegaEnc_path=ADO("NegaEnc","",scriptpath,"*.exe",false,true)
 	gui("NegaEncpath",NegaEnc_path)
@@ -179,13 +177,13 @@ function encode_vs(subs,sel)
 			gui("vsfm",vsfm_path)
 		end
     end
-	if P=="mkvmerge" then
-		_,err=io.open(NegaEncLib.."\\mkvmerge.exe")
+	if P=="ffmpeg" then
+		_,err=io.open(NegaEncLib.."\\ffmpeg.exe")
 		if err==nil then
-			gui("mmg",NegaEncLib.."\\mkvmerge.exe")
+			gui("ffmpeg",NegaEncLib.."\\ffmpeg.exe")
 		else
-			mmgpath=ADO("mkvmerge","",scriptpath,"*.exe",false,true)
-			gui("mmg",mmgpath)
+			ffmpegpath=ADO("ffmpeg","",scriptpath,"*.exe",false,true)
+			gui("ffmpeg",ffmpegpath)
 		end
     end
     if P=="Target" then
@@ -199,7 +197,7 @@ function encode_vs(subs,sel)
     end
 
     if P=="Save" then
-	konf="NegaEncpath:"..res.NegaEncpath.."\nxpath:"..res.xpath.."\nVSPipepath:"..res.VSPipepath.."\nnvencpath:"..res.nvencpath.."\nqsvencpath:"..res.qsvencpath.."\nvceencpath:"..res.vceencpath.."\nvsfpath:"..res.vsf.."\nvsfmpath:"..res.vsfm.."\nmmgpath:"..res.mmg.."\nvtype:"..res.vtype.."\nfilter1:"..res.filter1.."\nfilter2:"..res.filter2.."\ntarg:"..res.targ.."\ntarget:"..res.target.."\nGPUs:"..res.GPUs.."\n"
+	konf="NegaEncpath:"..res.NegaEncpath.."\nxpath:"..res.xpath.."\nVSPipepath:"..res.VSPipepath.."\nnvencpath:"..res.nvencpath.."\nqsvencpath:"..res.qsvencpath.."\nvceencpath:"..res.vceencpath.."\nvsfpath:"..res.vsf.."\nvsfmpath:"..res.vsfm.."\nffmpegpath:"..res.ffmpeg.."\nvtype:"..res.vtype.."\nfilter1:"..res.filter1.."\nfilter2:"..res.filter2.."\ntarg:"..res.targ.."\ntarget:"..res.target.."\nGPUs:"..res.GPUs.."\n"
 
 	file=io.open(enconfig,"w")
 	file:write(konf)
@@ -208,14 +206,14 @@ function encode_vs(subs,sel)
 	ADD({{class="label",label="enc_sets saved to:\n"..enconfig}},{"OK"},{close='OK'})
     end
     P,res=ADD(GUI,
-    {"Encode","NegaEnc","x264","VSPipe","NVEncC64","QSVEncC64","VCEEncC64","vsfilter","vsfiltermod","mkvmerge","Target","Secondary","Save","Cancel"},{ok='Encode',close='Cancel'})
+    {"Encode","NegaEnc","x264","VSPipe","NVEncC64","QSVEncC64","VCEEncC64","vsfilter","vsfiltermod","ffmpeg","Target","Secondary","Save","Cancel"},{ok='Encode',close='Cancel'})
     until P=="Encode" or P=="Cancel"
     if P=="Cancel" then ak() end
     ----------------------------------------------------------------------------------------------------------------------------------------
     
     videoname=res.vid
     encname=res.vid2
-    mkvmerge=res.mmg
+    ffmpeg=res.ffmpeg
     if not dummy_video then
 		target=vpath
 	else
@@ -266,21 +264,49 @@ function encode_vs(subs,sel)
 	local vsfile=io.open(scriptpath.."hardsub.vpy","w")
 	vsfile:write(vs)
 	vsfile:close()
-	
 	source=quo(scriptpath.."hardsub.vpy")
-    -- mkvmerge audio
-    if res.audio then
-	if res.trim then
-	  vstart=math.max(0,fr2ms(res.sf))
-	  vend=math.max(0,fr2ms(res.ef))
-	  timec1=time2string(vstart)
-	  timec2=time2string(vend)
-	  audiofile=target..encname..".mka"
-	  audiosplit=quo(mkvmerge).." -o "..quo(audiofile).." -D -S -M --split parts:"..timec1.."-"..timec2.." "..quo(afull)
-	  merge=audiosplit.."\n"..quo(mkvmerge).." -o "..quo(target..encname.."_muxed.mkv").." "..quo(target..encname..res.vtype).." "..quo(audiofile)
-	else
-	  merge=quo(mkvmerge).." -o "..quo(target..encname.."_muxed.mkv").." "..quo(target..encname..res.vtype).." -D -S -M "..quo(vfull)
+	
+	--NeroAAC
+	neroaac=res.neroaac
+	nero_cmd=" -acodec aac "
+	if neroaac then
+		neropath=NegaEncLib.."\\neroAacEnc.exe"
+		file=io.open(neropath)
+		if not file then 
+			t_error("Cannot locate neroAacEnc.exe, change to LC-AAC automatically.",false)
+		else
+			file:close()
+			nero_cmd="-f wav - | "..quo(neropath).." -ignorelength -q 0.618 -if - -of "
+		end
 	end
+	
+	-- ffmpeg audio
+    if res.audio then
+		if res.trim then
+			vstart=math.max(0,fr2ms(res.sf))
+			vend=math.max(0,fr2ms(res.ef))
+			timec1=time2string(vstart)
+			timec2=time2string(vend)
+			dur_time=(vend-vstart)/1000
+			--mp4/mkv use m4a/mka
+			if res.vtype==".mp4" then
+				audiofile=target..encname..".m4a"
+				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mp4")
+			else
+				audiofile=target..encname..".mka"
+				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mkv")
+			end
+		else
+			if res.vtype==".mp4" then
+				audiofile=target..encname..".m4a"
+				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mp4")
+			else
+				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy "..quo(target..encname.."_muxed.mkv")
+			end
+		end
     end
 
 	exe=res.GPUs
@@ -530,7 +556,7 @@ end
 
 function esc(str) str=str:gsub("[%%%(%)%[%]%.%-%+%*%?%^%$]","%%%1") return str end
 function logg(m) m=m or "nil" aegisub.log("\n "..m) end
-function quo(x) x="\""..x.."\"" return x end
+function quo(x)  x="\""..x.."\"" return x end
 
 function t_error(message,cancel)
 ADD({{class="label",label=message}},{"OK"},{close='OK'})
@@ -575,44 +601,6 @@ function dummy_vs(info_tbl)
 	return vs_code
 end
 
-function unicode_to_utf8(convertStr)
-
-    if type(convertStr)~="string" then
-        return convertStr
-    end
-
-    local bit = require("bit")
-    local resultStr=""
-    local i=1
-    while true do
-        
-        local num1=string.byte(convertStr,i)
-        local unicode
-        
-        if num1~=nil and string.sub(convertStr,i,i+1)=="\\u" then
-            unicode=tonumber("0x"..string.sub(convertStr,i+2,i+5))
-            i=i+6
-        elseif num1~=nil then
-            unicode=num1
-            i=i+1
-        else
-            break
-        end
-
-        if unicode <= 0x007f then
-            resultStr=resultStr..string.char(bit.band(unicode,0x7f))
-        elseif unicode >= 0x0080 and unicode <= 0x07ff then
-            resultStr=resultStr..string.char(bit.bor(0xc0,bit.band(bit.rshift(unicode,6),0x1f)))
-            resultStr=resultStr..string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
-        elseif unicode >= 0x0800 and unicode <= 0xffff then
-            resultStr=resultStr..string.char(bit.bor(0xe0,bit.band(bit.rshift(unicode,12),0x0f)))
-            resultStr=resultStr..string.char(bit.bor(0x80,bit.band(bit.rshift(unicode,6),0x3f)))
-            resultStr=resultStr..string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
-        end
-    end
-    resultStr=resultStr..'\0'
-    return resultStr
-end
 
 function clip_vs(info_tbl)
 	r,g,b=info_tbl[5],info_tbl[6],info_tbl[7]
