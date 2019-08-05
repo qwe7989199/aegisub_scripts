@@ -1,28 +1,33 @@
 --[[	Script for encoding / hardsubbing
 
 	Options:
-	
+
 	- encode whole video / a clip
+	- hardware encoding with AMD/Intel/Nvidia GPU
 	- hardsub 1 or 2 subtitle files or only encode
+	- support for Aegisub checkerboard dummy video
 	- use vsfilter or vsfiltermod for each subtitle track
 	- encode to mp4 or mkv
 	- mux with audio
-	
+        - compress audio using NeroAAC encoder
+
 	Requirements:
-	
-	- VSPipe.exe and x264.exe
-	- | NVEncC64.exe | QSVEncC64.exe | VCEEncC64.exe
-	- mkvmerge.exe (for audio mux and mkv)
-	- [vsfilter.dll / vsfiltermod.dll] for hardsubbing
+	- NegativeEncoder's directory structure (https://github.com/zyzsdy/NegativeEncoder)
+	- one of [VSPipe.exe and x264.exe] | [NVEncC64.exe] | [QSVEncC64.exe] | [VCEEncC64.exe] (isn't contained in NegativeEncoder's Lib, need to be set manually)
+	- ffmpeg.exe (for audio mux)
+	- neroAacEnc.exe
+	- [vsfilter.dll] (https://github.com/HomeOfVapourSynthEvolution/VSFilter/releases) 
+	- and/or [vsfiltermod.dll] (https://github.com/sorayuki/VSFilterMod/releases) for hardsubbing
 	
 --]]
 
 script_name="Encode - Hardsub - VapourSynth"
 script_description="Encode a clip w/o hardsubs"
 script_author="domo"
-script_version="1.0"
+script_version="1.1"
 
 local dummy_duration=600  --maximum dummy video duration threshold (second)
+local neroquality=0.5
 include("utils.lua")
 
 function encode_vs(subs,sel)
@@ -62,7 +67,6 @@ function encode_vs(subs,sel)
 	vsf2=konf:match("filter2:(.-)\n")
 	targ=konf:match("targ:(.-)\n")
 	target=konf:match("target:(.-)\n")
-	GPUs=konf:match("GPUs:(.-)\n")
     else
 	NegaEncpath=""
 	xpath=""
@@ -187,13 +191,13 @@ function encode_vs(subs,sel)
 		end
     end
     if P=="Target" then
-	tgt_path=ADO("Target folder for encodes (Select any file in it)",".",scriptpath,"",false,false)
+		tgt_path=ADO("Target folder for encodes (Select any file in it)",".",scriptpath,"",false,false)
 	if tgt_path then tgt_path=tgt_path:gsub("(.*\\).-$","%1") end
-	gui("target",tgt_path)
+		gui("target",tgt_path)
     end
     if P=="Secondary" then
-	sec_path=ADO("Secondary subs","",scriptpath,"*.ass",false,true)
-	gui("second",sec_path)
+		sec_path=ADO("Secondary subs","",scriptpath,"*.ass",false,true)
+		gui("second",sec_path)
     end
 
     if P=="Save" then
@@ -234,20 +238,43 @@ function encode_vs(subs,sel)
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
 	if res.filter1=="vsfilter" then 
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n" vsm=1
-	elseif res.filter1=="vsfiltermod" then
-		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(res.first)..")\n"	vsm=2
+	elseif res.filter1=="vsfiltermod" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
+		org_sub_name1=res.first
+		root_path1=string.match(org_sub_name1,"[^\\]+")
+		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
+		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\tempsub1.ass"
+		os.rename(org_sub_name1,temp_sub_name1)
+		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
 	else
 		text1=""
 	end
-	if res.filter2=="vsfilter" then filth2=res.vsf ts2="clip=core.vsf.TextSub" else filth2=res.vsfm ts2="clip=core.vsfm.TextSubMod" end
-	if res.sec then text2=ts2.."(clip,r"..quo(res.second)..")\n" else text2="" end
+	if res.filter2=="vsfilter" then 
+		filth2=res.vsf 
+		ts2="clip=core.vsf.TextSub"
+		temp_sub_name2=res.second
+	else
+		if res.sec then 
+		filth2=res.vsfm
+		org_sub_name2=res.second
+		root_path2=string.match(org_sub_name2,"[^\\]+")
+		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
+		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\tempsub2.ass"
+		os.rename(org_sub_name2,temp_sub_name2)
+		ts2="clip=core.vsfm.TextSubMod" 
+		end
+	end
+	if res.sec then 
+		text2=ts2.."(clip,r"..quo(temp_sub_name2)..")\n" 
+	else 
+		text2="" 
+	end
 	if res.trim then trim="clip=core.std.Trim(clip,"..res.sf..", "..res.ef-1 ..")" else trim="" end
 	if dummy_video then comment="#"
 		if length/frame_rate>dummy_duration and not res.trim then 
 			t_error("\nDummy video is too long, please set trim.",true) 
 		else 
 			dummy_vs_code=dummy_vs(dummy_info)
-			color_change='clip=core.fmtc.matrix(clip,mat="709",col_fam=vs.YUV, bits=16)\n'
+			color_change='clip=core.resize.Lanczos(clip,format=vs.YUV420P8, matrix_s="709")\n'
 		end
 	else comment="" dummy_vs_code="" color_change=""
 	end
@@ -276,11 +303,11 @@ function encode_vs(subs,sel)
 			t_error("Cannot locate neroAacEnc.exe, change to LC-AAC automatically.",false)
 		else
 			file:close()
-			nero_cmd="-f wav - | "..quo(neropath).." -ignorelength -q 0.618 -if - -of "
+			nero_cmd="-f wav - | "..quo(neropath).." -ignorelength -q "..neroquality.." -he -if - -of "
 		end
 	end
 	
-	-- ffmpeg audio
+	-- ffmpeg mux
     if res.audio then
 		file=io.open(ffmpegpath)
 		if not file then 
@@ -288,8 +315,10 @@ function encode_vs(subs,sel)
 		else
 			file:close()
 		end
-		
 		if res.trim then
+			if res.sf>=res.ef then
+				t_error("Cannot trim, please check.",true)
+			end
 			vstart=math.max(0,fr2ms(res.sf))
 			vend=math.max(0,fr2ms(res.ef))
 			timec1=time2string(vstart)
@@ -299,19 +328,19 @@ function encode_vs(subs,sel)
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
-				merge=audiosplit.."\n"..quo(ffmpeg).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mp4")
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
 				audiofile=target..encname..".mka"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
-				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy "..quo(target..encname.."_muxed.mkv")
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		else
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
-				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy  "..quo(target..encname.."_muxed.mp4")
+				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
-				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy "..quo(target..encname.."_muxed.mkv")
+				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		end
     end
@@ -345,6 +374,12 @@ function encode_vs(subs,sel)
 	batch=batch:gsub("%=","^=")
 	os.execute(quo(batch))
     end
+	
+	if res.filter1=="vsfiltermod" or (res.filter2=="vsfiltermod" and res.sec) then
+		os.rename(temp_sub_name1,org_sub_name1)
+		os.rename(temp_sub_name2,org_sub_name2)
+		os.execute("rd "..root_path1.."\\aeg_encode_tmp")
+	end
 end
 
 function encode_bat(exe,first_time,from_setting)
