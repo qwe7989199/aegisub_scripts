@@ -257,7 +257,9 @@ function encode_vs(subs,sel)
 		filth2=res.vsfm
 		org_sub_name2=res.second
 		root_path2=string.match(org_sub_name2,"[^\\]+")
-		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
+		if res.filter1=="vsfilter" then
+			os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
+		end
 		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\tempsub2.ass"
 		os.rename(org_sub_name2,temp_sub_name2)
 		ts2="clip=core.vsfm.TextSubMod" 
@@ -373,13 +375,17 @@ function encode_vs(subs,sel)
 	aegisub.progress.title("Encoding...")
 	batch=batch:gsub("%=","^=")
 	os.execute(quo(batch))
+		if res.filter1=="vsfiltermod" then
+			os.rename(temp_sub_name1,org_sub_name1)
+			if not res.sec then
+				os.execute("rd "..root_path1.."\\aeg_encode_tmp")
+			end
+		end
+		if (res.filter2=="vsfiltermod" and res.sec) then
+			os.rename(temp_sub_name2,org_sub_name2)
+			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
+		end
     end
-	
-	if res.filter1=="vsfiltermod" or (res.filter2=="vsfiltermod" and res.sec) then
-		os.rename(temp_sub_name1,org_sub_name1)
-		os.rename(temp_sub_name2,org_sub_name2)
-		os.execute("rd "..root_path1.."\\aeg_encode_tmp")
-	end
 end
 
 function encode_bat(exe,first_time,from_setting)
