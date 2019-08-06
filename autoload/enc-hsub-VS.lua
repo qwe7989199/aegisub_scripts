@@ -274,7 +274,7 @@ function encode_vs(subs,sel)
 	else 
 		dummy_info={frame_rate,length,x_res,y_res,r,g,b,checkerboard}
 	end
-	
+	time_stamp=os.date("%y%m%d%H%M%S", os.time())
 	-- vapoursynth
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
 	if res.filter1=="vsfilter" then 
@@ -283,7 +283,7 @@ function encode_vs(subs,sel)
 		org_sub_name1=res.first
 		root_path1=string.match(org_sub_name1,"[^\\]+")
 		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
-		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\tempsub1.ass"
+		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
 		os.rename(org_sub_name1,temp_sub_name1)
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
 	else
@@ -301,7 +301,7 @@ function encode_vs(subs,sel)
 		if res.filter1=="vsfilter" then
 			os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
 		end
-		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\tempsub2.ass"
+		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\sub2_"..time_stamp..".ass"
 		os.rename(org_sub_name2,temp_sub_name2)
 		ts2="clip=core.vsfm.TextSubMod" 
 		end
@@ -395,7 +395,7 @@ function encode_vs(subs,sel)
 	bat_code=encode_bat(exe,first_time)
 	if res.audio then bat_code=bat_code.."\n"..merge end
 	batch=scriptpath.."encode.bat"
-	if not dummy_video then
+	if not dummy_video and res.delAV then
 	bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
 	if res.audio and res.delAV then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
@@ -614,23 +614,14 @@ function encode_bat(exe,first_time,from_setting)
 end
 
 function time2string(num)
-	timecode=math.floor(num/1000)
-	tc0=math.floor(timecode/3600)
-	tc1=math.floor(timecode/60)
-	tc2=timecode%60
-	numstr="00"..num
-	tc3=numstr:match("(%d%d)%d$")
-	if tc1==60 then tc1=0 tc0=tc0+1 end
-	if tc2==60 then tc2=0 tc1=tc1+1 end
-	if tc1<10 then tc1="0"..tc1 end
-	if tc2<10 then tc2="0"..tc2 end
-	if tc3==nil then tc3="00" end
-	tc0=tostring(tc0)
-	tc1=tostring(tc1)
-	tc2=tostring(tc2)
-	timestring=tc0..":"..tc1..":"..tc2.."."..tc3
-	return timestring
+	sec=num/1000
+    hours=string.format("%02.f", math.floor(sec/3600))
+    mins=string.format("%02.f", math.floor(sec/60-(hours*60)))
+    secs=string.format("%02.f", math.floor(sec-hours*3600-mins*60))
+	ms=string.format("%02.f", math.floor(num-hours*3600000-mins*60000-secs*1000))
+    return hours..":"..mins..":"..secs.."."..ms
 end
+
 
 function choose_exe()
 	btn, result = aegisub.dialog.display({{class="label", label="Choose one to configure", x=1, y=0,height=2,width=2}},{"QSVEnc", "NVEnc","VCEEnc","x264"})
