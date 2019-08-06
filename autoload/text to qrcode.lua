@@ -1,7 +1,7 @@
 script_name="Text to QRCode"
 script_description="Convert Text to QRCode ASSDrawing"
 script_author="domo"
-script_version="1.0"
+script_version="1.01"
 
 function text_to_qrcode(subtitles, selected_lines, active_line)
 	local qrencode = require"qrencode"
