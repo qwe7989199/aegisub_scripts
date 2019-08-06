@@ -10,7 +10,10 @@ function text_to_qrcode(subtitles, selected_lines, active_line)
 	local alpha_str,color_str=HTML2ASS(color)
 	local width=4
 	local code_shape=""
+	local line_num=#selected_lines
+
 	for z, k in ipairs(selected_lines) do
+		aegisub.progress.title("Processing...("..z.."/"..line_num..")")
 		code_shape=""
 		l=subtitles[k]
 		text_stripped=string.gsub(l.text,"%{.-%}","")
@@ -34,6 +37,7 @@ function text_to_qrcode(subtitles, selected_lines, active_line)
 		size_ratio=math.floor(size/org_size*100)
 		l.text=string.format("{\\fscx%d\\fscy%d\\1c%s\\1a%s",size_ratio,size_ratio,color_str,alpha_str).."\\bord0\\shad0\\p1}"..code_shape
 		subtitles[0]=l
+		aegisub.progress.set(z/line_num*100)
 	end
 end
 
