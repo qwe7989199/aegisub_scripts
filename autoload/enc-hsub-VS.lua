@@ -78,7 +78,7 @@ function encode_vs(subs,sel)
 	vsfpath=""
 	vsfmpath=""
 	ffmpegpath=""
-	vtype=".mkv"
+	vtype=".mp4"
 	vsf1="vsfilter"
 	vsf2="vsfilter"
 	settlist=""
