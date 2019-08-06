@@ -1,16 +1,48 @@
---[[	Script for encoding / hardsubbing
+--[[	Script for encoding / trimming / hardsubbing
 
 	Options:
-
-	- encode whole video / a clip
-	- hardware encoding with AMD/Intel/Nvidia GPU
-	- hardsub 1 or 2 subtitle files or only encode
-	- support for Aegisub checkerboard dummy video
-	- use vsfilter or vsfiltermod for each subtitle track
-	- encode to mp4 or mkv
-	- mux with audio
-        - compress audio using NeroAAC encoder
-
+	- encode
+		- the video
+		- a clip
+		- Aegisub's dummy video
+		
+	- encode using 
+		- AMD GPU (Video Encoder Engine VCEEncC64.exe)
+		- Intel GPU (Quick Sync Video QSVEncC64.exe)
+		- NVIDIA GPU (Nvidia Video Encoding NVEncC64.exe)
+		- or VSPipe.exe+x264.exe (CPU)
+		
+	- hardsub 0 or 1 or 2 subtitle file(s) using
+		- vsfilter
+		- vsfiltermod
+	
+	- trim audio refer to clip
+		- LC-AAC
+		- NeroAAC (HE-AAC)
+		
+	- encode to
+		- mp4
+		- mkv (original audio will be preserved if not trim)
+	
+	- parameters of encoder
+		- VCEEnc
+			- preset
+			- bitrate
+		- QSVEnc
+			- preset
+			- mode
+				- vbr
+					- bitrate
+				- icq
+					- icq
+			- other
+		- NVEnc
+			- preset
+			- bitrate
+		- x264
+			- preset
+			- crf
+			
 	Requirements:
 	- NegativeEncoder's directory structure (https://github.com/zyzsdy/NegativeEncoder)
 	- one of [VSPipe.exe and x264.exe] | [NVEncC64.exe] | [QSVEncC64.exe] | [VCEEncC64.exe] (isn't contained in NegativeEncoder's Lib, need to be set manually)
@@ -47,87 +79,89 @@ function encode_vs(subs,sel)
 	sframe=999999
 	eframe=0
 	videoname=nil
-    file=io.open(enconfig)
-    if file~=nil then
-	konf=file:read("*all")
-	io.close(file)
-	NegaEncpath=konf:match("NegaEncpath:(.-)\n")
-	xpath=konf:match("xpath:(.-)\n")
-	VSPipepath=konf:match("VSPipepath:(.-)\n")
-	nvencpath=konf:match("nvencpath:(.-)\n")
-	qsvencpath=konf:match("qsvencpath:(.-)\n")
-	vceencpath=konf:match("vceencpath:(.-)\n")
-	GPUs=konf:match("GPUs:(.-)\n")
-	sett=konf:match("enc_sets:(.-)\n")
-	vsfpath=konf:match("vsfpath:(.-)\n")
-	vsfmpath=konf:match("vsfmpath:(.-)\n")
-	ffmpegpath=konf:match("ffmpegpath:(.-)\n") or ""
-	vtype=konf:match("vtype:(.-)\n")
-	vsf1=konf:match("filter1:(.-)\n")
-	vsf2=konf:match("filter2:(.-)\n")
-	targ=konf:match("targ:(.-)\n")
-	target=konf:match("target:(.-)\n")
-    else
-	NegaEncpath=""
-	xpath=""
-	VSPipepath=""
-	nvencpath=""
-	qsvencpath=""
-	vceencpath=""
-	GPUs=""
-	vsfpath=""
-	vsfmpath=""
-	ffmpegpath=""
-	vtype=".mp4"
-	vsf1="vsfilter"
-	vsf2="vsfilter"
-	settlist=""
-	targ="Same as source"
-	target=""
-    end
+	file=io.open(enconfig)
+	if file~=nil then
+		konf=file:read("*all")
+		io.close(file)
+		NegaEncpath=konf:match("NegaEncpath:(.-)\n")
+		xpath=konf:match("xpath:(.-)\n")
+		VSPipepath=konf:match("VSPipepath:(.-)\n")
+		nvencpath=konf:match("nvencpath:(.-)\n")
+		qsvencpath=konf:match("qsvencpath:(.-)\n")
+		vceencpath=konf:match("vceencpath:(.-)\n")
+		GPUs=konf:match("GPUs:(.-)\n")
+		sett=konf:match("enc_sets:(.-)\n")
+		vsfpath=konf:match("vsfpath:(.-)\n")
+		vsfmpath=konf:match("vsfmpath:(.-)\n")
+		ffmpegpath=konf:match("ffmpegpath:(.-)\n") or ""
+		vtype=konf:match("vtype:(.-)\n")
+		vsf1=konf:match("filter1:(.-)\n")
+		vsf2=konf:match("filter2:(.-)\n")
+		targ=konf:match("targ:(.-)\n")
+		target=konf:match("target:(.-)\n")
+	else
+		NegaEncpath=""
+		xpath=""
+		VSPipepath=""
+		nvencpath=""
+		qsvencpath=""
+		vceencpath=""
+		GPUs=""
+		vsfpath=""
+		vsfmpath=""
+		ffmpegpath=""
+		vtype=".mkv"
+		vsf1="vsfilter"
+		vsf2="vsfilter"
+		settlist=""
+		targ="Same as source"
+		target=""
+	end
 	if NegaEncpath~="" then
 		NegaEncLib=string.match(NegaEncpath,"(.*\\).*.exe").."Libs"
 	end
-    for i=1,#subs do
-	if subs[i].class=="info" then
-	  if subs[i].key=="Audio File" then audioname=subs[i].value end
-	  if subs[i].key=="Video File" then videoname=subs[i].value break end
+	for i=1,#subs do
+		if subs[i].class=="info" then
+			if subs[i].key=="Audio File" then audioname=subs[i].value end
+			if subs[i].key=="Video File" then videoname=subs[i].value break end
+		end
+		if subs[i].class~="info" then break end
 	end
-	if subs[i].class~="info" then break end
-    end
-    if audioname==nil then audioname=aegisub.project_properties().audio_file:gsub("^.*\\","") end
-    if videoname==nil then videoname=aegisub.project_properties().video_file:gsub("^.*\\","") end
-    if videoname==nil or videoname=="" or aegisub.frame_from_ms(10)==nil then t_error("No video detected.",1) end
+	if audioname==nil then audioname=aegisub.project_properties().audio_file:gsub("^.*\\","") end
+	if videoname==nil then videoname=aegisub.project_properties().video_file:gsub("^.*\\","") end
+	if videoname==nil or videoname=="" or aegisub.frame_from_ms(10)==nil then t_error("No video detected.",1) end
 	if string.find(videoname,"?dummy") then --dummy video
 		dummy_video=true
 		dummy,frame_rate,length,x_res,y_res,r,g,b,checkerboard = string.match(videoname,
 		"([^:]*):([^:]*):([^:]*):([^:]*):([^:]*):([^:]*):([^:]*):([^:]*):([^:]*)")
 	end
-    vid2=videoname:gsub("%.[^%.]+","") :gsub("_?premux","") :gsub("_?workraw","")
-    vid2=vid2:gsub("[?:]","").."_hardsub"
-    for z,i in ipairs(sel) do
-	line=subs[i]
-        start=line.start_time
-	endt=line.end_time
-	sfr=ms2fr(start)
-	efr=ms2fr(endt)
+	vid2=videoname:gsub("%.[^%.]+","") :gsub("_?premux","") :gsub("_?workraw","")
+	vid2=vid2:gsub("[?:]","").."_hardsub"
+	for z,i in ipairs(sel) do
+		line=subs[i]
+		start=line.start_time
+		endt=line.end_time
+		sfr=ms2fr(start)
+		efr=ms2fr(endt)
 	if sfr<sframe then sframe=sfr end
 	if efr>eframe then eframe=efr end
-    end
+	end
+	
 	require("enc_gui")
 	GUI=GUI_Config.vs
-    repeat
+	
+	repeat
 	
 	if P=="NegaEnc" then
-	NegaEnc_path=ADO("NegaEnc","",scriptpath,"*.exe",false,true)
-	gui("NegaEncpath",NegaEnc_path)
+		NegaEnc_path=ADO("NegaEnc","",scriptpath,"*.exe",false,true)
+		gui("NegaEncpath",NegaEnc_path)
 	end
 	if NegaEnc_path~="" and NegaEnc_path~=nil then NegaEncLib=string.match(NegaEnc_path,"(.*\\).*.exe").."Libs" end
 	if P=="x264" then
-	x264_path=ADO("x264","",scriptpath,"*.exe",false,true)
-	gui("xpath",x264_path)
-    end
-    if P=="VSPipe" then
+		x264_path=ADO("x264","",scriptpath,"*.exe",false,true)
+		gui("xpath",x264_path)
+	end
+	if P=="VSPipe" then
 		_,err=io.open(NegaEncLib.."\\VSPipe.exe")
 		if err==nil then
 			gui("VSPipepath",NegaEncLib.."\\VSPipe.exe")
@@ -135,7 +169,7 @@ function encode_vs(subs,sel)
 			VSPipe_path=ADO("VSPipe","",scriptpath,"*.exe",false,true)
 			gui("VSPipepath",VSPipe_path)
 		end
-    end
+	end
 	if P=="NVEncC64" then
 		_,err=io.open(NegaEncLib.."\\NVEncC64.exe")
 		if err==nil then
@@ -144,7 +178,7 @@ function encode_vs(subs,sel)
 			NVEncC64_path=ADO("NVEncC64","",scriptpath,"*.exe",false,true)
 			gui("nvencpath",NVEncC64_path)
 		end
-    end
+	end
 	if P=="QSVEncC64" then
 		_,err=io.open(NegaEncLib.."\\QSVEncC64.exe")
 		if err==nil then
@@ -153,7 +187,7 @@ function encode_vs(subs,sel)
 			QSVEncC64_path=ADO("QSVEncC64","",scriptpath,"*.exe",false,true)
 			gui("qsvencpath",QSVEncC64_path)
 		end
-    end
+	end
 	if P=="VCEEncC64" then
 		_,err=io.open(NegaEncLib.."\\VCEEncC64.exe")
 		if err==nil then
@@ -162,7 +196,7 @@ function encode_vs(subs,sel)
 			VCEEncC64_path=ADO("VCEEncC64","",scriptpath,"*.exe",false,true)
 			gui("vceencpath",VCEEncC64_path)
 		end
-    end
+	end
 	if P=="vsfilter" then
 		_,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\vsfilter.dll")
 		if err==nil then
@@ -171,7 +205,7 @@ function encode_vs(subs,sel)
 			vsf_path=ADO("vsfilter","",scriptpath,"*.dll",false,true)
 			gui("vsf",vsf_path)
 		end
-    end
+	end
 	if P=="vsfiltermod" then
 		_,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\VSFilterMod.dll")
 		if err==nil then
@@ -180,7 +214,7 @@ function encode_vs(subs,sel)
 			vsf_path=ADO("vsfiltermod","",scriptpath,"*.dll",false,true)
 			gui("vsfm",vsfm_path)
 		end
-    end
+	end
 	if P=="ffmpeg" then
 		_,err=io.open(NegaEncLib.."\\ffmpeg.exe")
 		if err==nil then
@@ -189,55 +223,62 @@ function encode_vs(subs,sel)
 			ffmpegpath=ADO("ffmpeg","",scriptpath,"*.exe",false,true)
 			gui("ffmpeg",ffmpegpath)
 		end
-    end
-    if P=="Target" then
+	end
+	if P=="Target" then
 		tgt_path=ADO("Target folder for encodes (Select any file in it)",".",scriptpath,"",false,false)
 	if tgt_path then tgt_path=tgt_path:gsub("(.*\\).-$","%1") end
 		gui("target",tgt_path)
-    end
-    if P=="Secondary" then
+	end
+	if P=="Secondary" then
 		sec_path=ADO("Secondary subs","",scriptpath,"*.ass",false,true)
 		gui("second",sec_path)
-    end
+	end
 
-    if P=="Save" then
-	konf="NegaEncpath:"..res.NegaEncpath.."\nxpath:"..res.xpath.."\nVSPipepath:"..res.VSPipepath.."\nnvencpath:"..res.nvencpath.."\nqsvencpath:"..res.qsvencpath.."\nvceencpath:"..res.vceencpath.."\nvsfpath:"..res.vsf.."\nvsfmpath:"..res.vsfm.."\nffmpegpath:"..res.ffmpeg.."\nvtype:"..res.vtype.."\nfilter1:"..res.filter1.."\nfilter2:"..res.filter2.."\ntarg:"..res.targ.."\ntarget:"..res.target.."\nGPUs:"..res.GPUs.."\n"
+	if P=="Save" then
+		konf="NegaEncpath:"..res.NegaEncpath.."\nxpath:"..res.xpath.."\nVSPipepath:"..res.VSPipepath.."\nnvencpath:"..res.nvencpath.."\nqsvencpath:"..res.qsvencpath.."\nvceencpath:"..res.vceencpath.."\nvsfpath:"..res.vsf.."\nvsfmpath:"..res.vsfm.."\nffmpegpath:"..res.ffmpeg.."\nvtype:"..res.vtype.."\nfilter1:"..res.filter1.."\nfilter2:"..res.filter2.."\ntarg:"..res.targ.."\ntarget:"..res.target.."\nGPUs:"..res.GPUs.."\n"
 
-	file=io.open(enconfig,"w")
-	file:write(konf)
-	file:close()
-	for k,v in ipairs(GUI) do v.value=res[v.name] end
-	ADD({{class="label",label="enc_sets saved to:\n"..enconfig}},{"OK"},{close='OK'})
-    end
-    P,res=ADD(GUI,
-    {"Encode","NegaEnc","x264","VSPipe","NVEncC64","QSVEncC64","VCEEncC64","vsfilter","vsfiltermod","ffmpeg","Target","Secondary","Save","Cancel"},{ok='Encode',close='Cancel'})
-    until P=="Encode" or P=="Cancel"
-    if P=="Cancel" then ak() end
-    ----------------------------------------------------------------------------------------------------------------------------------------
-    
-    videoname=res.vid
-    encname=res.vid2
-    ffmpegpath=res.ffmpeg
-    if not dummy_video then
+		file=io.open(enconfig,"w")
+		file:write(konf)
+		file:close()
+		for k,v in ipairs(GUI) do v.value=res[v.name] end
+		ADD({{class="label",label="enc_sets saved to:\n"..enconfig}},{"OK"},{close='OK'})
+	end
+	P,res=ADD(GUI,
+		{"Encode","NegaEnc","x264","VSPipe","NVEncC64","QSVEncC64","VCEEncC64","vsfilter","vsfiltermod","ffmpeg","Target","Secondary","Save","Cancel"},{ok='Encode',close='Cancel',save="Save"})
+	until P=="Encode" or P=="Cancel"
+	if P=="Cancel" then ak() end
+	----------------------------------------------------------------------------------------------------------------------------------------
+	
+	videoname=res.vid
+	encname=res.vid2
+	ffmpegpath=res.ffmpeg
+	if not dummy_video then
 		target=vpath
 	else
 		target=scriptpath
 	end
-    vfull=vpath..videoname
+	vfull=vpath..videoname
 	afull=apath..audioname
-    vsm=0
-    if res.targ=="Custom:" then target=res.target end
-    if res.filter1=="none" then res.sec=false encname=encname:gsub("_hardsub","_encode") end
-    if res.trim then encname=encname.."_"..res.sf.."-"..res.ef encname=encname:gsub("_encode","") end
-    
-	if not dummy_video then file=io.open(vfull)   if file==nil then t_error(vfull.."\nERROR: File does not exist (video source).",true) else file:close() end 
-	else dummy_info={frame_rate,length,x_res,y_res,r,g,b,checkerboard}
+	vsm=0
+	if res.targ=="Custom:" then target=res.target end
+	if res.filter1=="none" then res.sec=false encname=encname:gsub("_hardsub","_encode") end
+	if res.trim then encname=encname.."_"..res.sf.."-"..res.ef encname=encname:gsub("_encode","") end
+	
+	if not dummy_video then
+		file=io.open(vfull)
+		if file==nil then 
+			t_error(vfull.."\nERROR: File does not exist (video source).",true)
+		else 
+			file:close()
+		end 
+	else 
+		dummy_info={frame_rate,length,x_res,y_res,r,g,b,checkerboard}
 	end
-    
-    -- vapoursynth
+	
+	-- vapoursynth
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
 	if res.filter1=="vsfilter" then 
-		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n" vsm=1
+		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
 	elseif res.filter1=="vsfiltermod" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
 		org_sub_name1=res.first
 		root_path1=string.match(org_sub_name1,"[^\\]+")
@@ -310,7 +351,7 @@ function encode_vs(subs,sel)
 	end
 	
 	-- ffmpeg mux
-    if res.audio then
+	if res.audio then
 		file=io.open(ffmpegpath)
 		if not file then 
 			t_error("Cannot locate ffmpeg.exe.",true)
@@ -345,33 +386,34 @@ function encode_vs(subs,sel)
 				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		end
-    end
+	end
 
 	exe=res.GPUs
-    enc_bat_set=ADP("?user").."\\enc_set_"..exe..".conf"
+	enc_bat_set=ADP("?user").."\\enc_set_"..exe..".conf"
 	file=io.open(enc_bat_set)
 	if not file then first_time=true else file:close() end
 	bat_code=encode_bat(exe,first_time)
-    if res.audio then bat_code=bat_code.."\n"..merge end
-    batch=scriptpath.."encode.bat"
+	if res.audio then bat_code=bat_code.."\n"..merge end
+	batch=scriptpath.."encode.bat"
 	if not dummy_video then
-    bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
+	bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
-    if res.audio and res.delAV then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
+	if res.audio and res.delAV then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
 	if audiofile then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
-    end
-    if res.delvs then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
+	end
+	if res.delvs then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
 	if res.pause then bat_code=bat_code.."\npause" end
-    if res.delbat then bat_code=bat_code.."\ndel "..quo(batch) end
-    local xfile=io.open(batch,"w")
-    xfile:write("chcp 65001\n"..bat_code)
-    xfile:close()
-    
-    -- encode
-    if res.trim then tr=res.sf..","..res.ef else tr="None" end
-    info="Encode name: "..encname..res.vtype.."\nUse "..exe.." Encoder".."\nTrim: "..tr.."\n\nBatch file: "..batch.."\n\nYou can encode now or run this batch file later.\nIf encoding from Aegisub doesn't work,\njust run the batch file.\n\nEncode now?"
-    P=ADD({{class="label",label=info}},{"Yes","No"},{ok='Yes',close='No'})
-    if P=="Yes" then
+	if res.delbat then bat_code=bat_code.."\ndel "..quo(batch) end
+	
+	local xfile=io.open(batch,"w")
+	xfile:write("chcp 65001\n"..bat_code)
+	xfile:close()
+	
+	-- encode
+	if res.trim then tr=res.sf..","..res.ef else tr="None" end
+	info="Encode name: "..encname..res.vtype.."\nUse "..exe.." Encoder".."\nTrim: "..tr.."\n\nBatch file: "..batch.."\n\nYou can encode now or run this batch file later.\nIf encoding from Aegisub doesn't work,\njust run the batch file.\n\nEncode now?"
+	P=ADD({{class="label",label=info}},{"Yes","No"},{ok='Yes',close='No'})
+	if P=="Yes" then
 	aegisub.progress.title("Encoding...")
 	batch=batch:gsub("%=","^=")
 	os.execute(quo(batch))
@@ -385,16 +427,19 @@ function encode_vs(subs,sel)
 			os.rename(temp_sub_name2,org_sub_name2)
 			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
 		end
-    end
+	end
 end
 
 function encode_bat(exe,first_time,from_setting)
+
 	if not exe then
 		aegisub.cancel()
 	end
+	
 	enc_bat_set=aegisub.decode_path("?user").."\\enc_set_"..exe..".conf"
-    file=io.open(enc_bat_set)
-    if file then
+	file=io.open(enc_bat_set)
+	
+	if file then
 		enc_set=file:read("*all")
 		file:close()
 		x264crf=enc_set:match("crf:(.-)\n")
@@ -411,7 +456,7 @@ function encode_bat(exe,first_time,from_setting)
 		VCEpreset=enc_set:match("VCEpreset:(.-)\n")
 		VCEbitrate=enc_set:match("VCEbitrate:(.-)\n")
 		VCE_other_para=enc_set:match("VCE_other_para:(.-)\n")
-    else
+	else
 		x264crf=23
 		x264preset="medium"
 		x264_other_para=" "
@@ -427,6 +472,7 @@ function encode_bat(exe,first_time,from_setting)
 		VCEbitrate=5000
 		VCE_other_para=" "
 	end
+	
 	x264preset_tbl={"ultrafast","superfast","veryfast","faster","fast", "medium", "slow","slower","veryslow","placebo"}
 	dia_x264={
 	{x=0,y=0,class="label",label="x264 enc_set:"},
@@ -597,20 +643,18 @@ end
 
 function gui(a,b)
   for k,v in ipairs(GUI) do
-    if b==nil then b="" end
-    if v.name==a then v.value=b else v.value=res[v.name] end
+	if b==nil then b="" end
+	if v.name==a then v.value=b else v.value=res[v.name] end
   end
 end
 
 function esc(str) str=str:gsub("[%%%(%)%[%]%.%-%+%*%?%^%$]","%%%1") return str end
-function logg(m) m=m or "nil" aegisub.log("\n "..m) end
 function quo(x)  x="\""..x.."\"" return x end
 
 function t_error(message,cancel)
 ADD({{class="label",label=message}},{"OK"},{close='OK'})
 if cancel then ak() end
 end
-
 
 local function RGB2HSL(R, G, B)
 	local r, g, b = R/255, G/255, B/255
@@ -648,7 +692,6 @@ function dummy_vs(info_tbl)
 	end
 	return vs_code
 end
-
 
 function clip_vs(info_tbl)
 	r,g,b=info_tbl[5],info_tbl[6],info_tbl[7]
