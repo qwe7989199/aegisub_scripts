@@ -63,6 +63,7 @@ local neroquality=0.5
 include("utils.lua")
 
 function encode_vs(subs,sel)
+	P=""
 	ADD=aegisub.dialog.display
 	ADP=aegisub.decode_path
 	ADO=aegisub.dialog.open
@@ -162,7 +163,7 @@ function encode_vs(subs,sel)
 		gui("xpath",x264_path)
 	end
 	if P=="VSPipe" then
-		_,err=io.open(NegaEncLib.."\\VSPipe.exe")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\VSPipe.exe") else err="" end
 		if err==nil then
 			gui("VSPipepath",NegaEncLib.."\\VSPipe.exe")
 		else
@@ -171,7 +172,7 @@ function encode_vs(subs,sel)
 		end
 	end
 	if P=="NVEncC64" then
-		_,err=io.open(NegaEncLib.."\\NVEncC64.exe")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\NVEncC64.exe") else err="" end
 		if err==nil then
 			gui("nvencpath",NegaEncLib.."\\NVEncC64.exe")
 		else
@@ -180,7 +181,7 @@ function encode_vs(subs,sel)
 		end
 	end
 	if P=="QSVEncC64" then
-		_,err=io.open(NegaEncLib.."\\QSVEncC64.exe")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\QSVEncC64.exe") else err="" end
 		if err==nil then
 			gui("qsvencpath",NegaEncLib.."\\QSVEncC64.exe")
 		else
@@ -189,7 +190,7 @@ function encode_vs(subs,sel)
 		end
 	end
 	if P=="VCEEncC64" then
-		_,err=io.open(NegaEncLib.."\\VCEEncC64.exe")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\VCEEncC64.exe") else err="" end
 		if err==nil then
 			gui("vceencpath",NegaEncLib.."\\VCEEncC64.exe")
 		else
@@ -198,7 +199,7 @@ function encode_vs(subs,sel)
 		end
 	end
 	if P=="vsfilter" then
-		_,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\vsfilter.dll")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\vsfilter.dll") else err="" end
 		if err==nil then
 			gui("vsf",NegaEncLib.."\\vapoursynth64\\plugins\\vsfilter.dll")
 		else
@@ -207,7 +208,7 @@ function encode_vs(subs,sel)
 		end
 	end
 	if P=="vsfiltermod" then
-		_,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\VSFilterMod.dll")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\vapoursynth64\\plugins\\VSFilterMod.dll") else err="" end
 		if err==nil then
 			gui("vsfm",NegaEncLib.."\\vapoursynth64\\plugins\\VSFilterMod.dll")
 		else
@@ -216,7 +217,7 @@ function encode_vs(subs,sel)
 		end
 	end
 	if P=="ffmpeg" then
-		_,err=io.open(NegaEncLib.."\\ffmpeg.exe")
+		if NegaEncLib~=nil and NegaEncLib~="" then _,err=io.open(NegaEncLib.."\\ffmpeg.exe") else err="" end
 		if err==nil then
 			gui("ffmpeg",NegaEncLib.."\\ffmpeg.exe")
 		else
@@ -373,7 +374,7 @@ function encode_vs(subs,sel)
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
-				audiofile=target..encname..".mka"
+				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
@@ -395,7 +396,7 @@ function encode_vs(subs,sel)
 	bat_code=encode_bat(exe,first_time)
 	if res.audio then bat_code=bat_code.."\n"..merge end
 	batch=scriptpath.."encode.bat"
-	if not dummy_video and res.delAV then
+	if not dummy_video and res.del then
 	bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
 	if res.audio and res.delAV then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
