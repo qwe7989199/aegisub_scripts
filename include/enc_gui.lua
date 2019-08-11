@@ -88,7 +88,7 @@ GUI_Config={['avs']=
 	{x=7,y=11,width=1,class="checkbox",name="audio",label="Mux with audio (LC-AAC)",value=true,hint="whether you're trimming or not"},
 	{x=8,y=11,width=1,class="checkbox",name="neroaac",label="Use Nero AAC Encoder (HE-AAC)",value=true},
 	{x=0,y=11,width=1,class="checkbox",name="delbat",label="Delete batch file",value=false},
-	{x=1,y=11,width=2,class="checkbox",name="delavs",label="Delete vapoursynth script",value=false},
+	{x=1,y=11,width=2,class="checkbox",name="delvs",label="Delete VapourSynth script",value=false},
 	{x=4,y=11,width=1,class="checkbox",name="delAV",label="Delete A/V after muxing",value=true,hint="Delete audio/video files only needed for muxing"},
 	{x=5,y=11,width=2,class="checkbox",name="pause",label="Keep cmd window open  ",value=true}
 }
