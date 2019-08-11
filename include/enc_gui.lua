@@ -90,7 +90,8 @@ GUI_Config={['avs']=
 	{x=0,y=11,width=1,class="checkbox",name="delbat",label="Delete batch file",value=false},
 	{x=1,y=11,width=2,class="checkbox",name="delvs",label="Delete VapourSynth script",value=false},
 	{x=4,y=11,width=1,class="checkbox",name="delAV",label="Delete A/V after muxing",value=true,hint="Delete audio/video files only needed for muxing"},
-	{x=5,y=11,width=2,class="checkbox",name="pause",label="Keep cmd window open  ",value=true}
+	{x=5,y=11,width=2,class="checkbox",name="pause",label="Keep cmd window open  ",value=true},
+	{x=9,y=11,width=1,class="checkbox",name="ignore_error",label="Ignore error",value=true,hint="Do NOT terminate when error occurs"}
 }
 
 }
