@@ -11,7 +11,8 @@
 		- Intel GPU (Quick Sync Video QSVEncC64.exe)
 		- NVIDIA GPU (Nvidia Video Encoding NVEncC64.exe)
 		- or VSPipe.exe+x264.exe (CPU)
-		
+		- ffmpeg (only for mov file)
+
 	- hardsub 0 or 1 or 2 subtitle file(s) using
 		- vsfilter
 		- vsfiltermod
@@ -23,7 +24,8 @@
 	- encode to
 		- mp4
 		- mkv (original audio will be preserved if not trim)
-	
+		- mov (with alpha channel)
+
 	- parameters of encoder
 		- VCEEnc
 			- preset
@@ -42,15 +44,17 @@
 		- x264
 			- preset
 			- crf
-			
+		- ffmpeg
+			- qtrle (fast, small, lossless, not supported after Adobe Premiere CC2018)
+			- png (slow, big, good compatibility)
+
 	Requirements:
 	- NegativeEncoder's directory structure (https://github.com/zyzsdy/NegativeEncoder)
 	- one of [VSPipe.exe and x264.exe] | [NVEncC64.exe] | [QSVEncC64.exe] | [VCEEncC64.exe] (isn't contained in NegativeEncoder's Lib, need to be set manually)
-	- ffmpeg.exe (for audio mux)
+	- ffmpeg.exe (for audio mux and mov file)
 	- neroAacEnc.exe
 	- [vsfilter.dll] (https://github.com/HomeOfVapourSynthEvolution/VSFilter/releases) 
 	- and/or [vsfiltermod.dll] (https://github.com/sorayuki/VSFilterMod/releases) for hardsubbing
-	
 --]]
 
 script_name="Encode - Hardsub - VapourSynth"
