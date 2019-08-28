@@ -53,7 +53,7 @@ GUI_Config={['avs']=
 	{x=6,y=1,class="label",label="x264.exe:",name="x264"},
 	{x=7,y=1,width=3,class="edit",name="xpath",value=xpath or "",hint="Need to fill when use VSPipe"},
 	{x=0,y=2,class="label",label="Which to use:"},
-	{x=1,y=2,width=3,class="dropdown",name="GPUs",value=GPUs,items={"NVEnc","QSVEnc","VCEEnc","VSPipe+x264"}},
+	{x=1,y=2,width=3,class="dropdown",name="GPUs",value=GPUs,items={"NVEnc","QSVEnc","VCEEnc","VSPipe+x264","ffmpeg(mov with alpha)"}},
 	{x=6,y=2,class="label",name="VSPipe",label="VSPipe.exe:"},
 	{x=7,y=2,width=3,class="edit",name="VSPipepath",value=VSPipepath or "",hint="Encode use CPU"},
 	{x=0,y=3,class="label",name="Nvidia",label="NVEncC64.exe:"},
@@ -72,7 +72,7 @@ GUI_Config={['avs']=
 	{x=1,y=6,width=2,class="dropdown",name="targ",value=targ,items={"Same as source","Custom:"}},
 	{x=3,y=6,width=7,class="edit",name="target",value=target},
 	{x=0,y=7,class="label",label="Encode name:"},
-	{x=1,y=7,width=2,class="dropdown",name="vtype",value=vtype,items={".mkv",".mp4"}},
+	{x=1,y=7,width=2,class="dropdown",name="vtype",value=vtype,items={".mkv",".mp4",".mov(+alpha)"}},
 	{x=3,y=7,width=7,class="edit",name="vid2",value=vid2},
 	{x=0,y=8,class="label",label="Primary subs:"},
 	{x=1,y=8,width=2,class="dropdown",name="filter1",value=vsf1,items={"none","vsfilter","vsfiltermod"}},
@@ -86,11 +86,11 @@ GUI_Config={['avs']=
 	{x=4,y=10,width=2,class="intedit",name="ef",value=eframe},
 	{x=6,y=10,width=4,class="label",label=" If checked, start and end frames are added to Encode name "},
 	{x=7,y=11,width=1,class="checkbox",name="audio",label="Mux with audio (LC-AAC)",value=true,hint="whether you're trimming or not"},
-	{x=8,y=11,width=1,class="checkbox",name="neroaac",label="Use Nero AAC Encoder (HE-AAC)",value=true},
-	{x=0,y=11,width=1,class="checkbox",name="delbat",label="Delete batch file",value=false},
-	{x=1,y=11,width=2,class="checkbox",name="delvs",label="Delete VapourSynth script",value=false},
+	{x=8,y=11,width=1,class="checkbox",name="neroaac",label="Use Nero AAC Encoder (HE-AAC)",value=false},
+	{x=0,y=11,width=1,class="checkbox",name="delbat",label="Delete batch file",value=true},
+	{x=1,y=11,width=2,class="checkbox",name="delvs",label="Delete vapoursynth script",value=true},
 	{x=4,y=11,width=1,class="checkbox",name="delAV",label="Delete A/V after muxing",value=true,hint="Delete audio/video files only needed for muxing"},
-	{x=5,y=11,width=2,class="checkbox",name="pause",label="Keep cmd window open  ",value=true}
+	{x=5,y=11,width=2,class="checkbox",name="pause",label="Keep cmd window open  ",value=true},
+	{x=9,y=11,width=1,class="checkbox",name="delavs",label="Delete avs",value=true}
 }
-
 }
