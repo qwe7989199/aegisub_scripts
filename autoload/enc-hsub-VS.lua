@@ -56,7 +56,7 @@
 script_name="Encode - Hardsub - VapourSynth"
 script_description="Encode a clip w/o hardsubs"
 script_author="domo"
-script_version="1.1"
+script_version="1.2"
 
 local dummy_duration=600  --maximum dummy video duration threshold (second)
 local neroquality=0.5
@@ -265,6 +265,7 @@ function encode_vs(subs,sel)
 	if res.filter1=="none" then res.sec=false encname=encname:gsub("_hardsub","_encode") end
 	if res.trim then encname=encname.."_"..res.sf.."-"..res.ef encname=encname:gsub("_encode","") end
 	
+	
 	if not dummy_video then
 		file=io.open(vfull)
 		if file==nil then 
@@ -278,15 +279,15 @@ function encode_vs(subs,sel)
 	time_stamp=os.date("%y%m%d%H%M%S", os.time())
 	-- vapoursynth
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
-	if res.filter1=="vsfilter" then 
-		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
-	elseif res.filter1=="vsfiltermod" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
+	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") then 
 		org_sub_name1=res.first
 		root_path1=string.match(org_sub_name1,"[^\\]+")
 		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
 		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
 		os.rename(org_sub_name1,temp_sub_name1)
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
+	elseif res.filter1=="vsfilter" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
+		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
 	else
 		text1=""
 	end
@@ -300,7 +301,7 @@ function encode_vs(subs,sel)
 		org_sub_name2=res.second
 		root_path2=string.match(org_sub_name2,"[^\\]+")
 		if res.filter1=="vsfilter" then
-			os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
+			os.execute('mkdir '..root_path2.."\\aeg_encode_tmp")
 		end
 		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\sub2_"..time_stamp..".ass"
 		os.rename(org_sub_name2,temp_sub_name2)
@@ -314,7 +315,7 @@ function encode_vs(subs,sel)
 	end
 	if res.trim then trim="clip=core.std.Trim(clip,"..res.sf..", "..res.ef-1 ..")" else trim="" end
 	if dummy_video then comment="#"
-		if length/frame_rate>dummy_duration and not res.trim then 
+		if length/frame_rate>dummy_duration and not res.trim and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then 
 			t_error("\nDummy video is too long, please set trim.",true) 
 		else 
 			dummy_vs_code=dummy_vs(dummy_info)
@@ -323,6 +324,12 @@ function encode_vs(subs,sel)
 	else comment="" dummy_vs_code="" color_change=""
 	end
 	vs="import vapoursynth as vs\ncore=vs.get_core()\n"..dummy_vs_code..comment.."clip=core.ffms2.Source(r"..quo(vfull)..")\n"..text1..text2..color_change..trim.."\nclip.set_output()"
+	if scriptpath=="?script\\" then scriptpath=vpath end
+	local vsfile=io.open(scriptpath.."hardsub.vpy","w")
+	vsfile:write(vs)
+	vsfile:close()
+	source=quo(scriptpath.."hardsub.vpy")
+	
 	-- vsfilter checks
 	if vsm==1 or vsm==3 then
 	  file=io.open(res.vsf) if file==nil then t_error(res.vsf.."\nERROR: File does not exist (vsfilter).",true) else file:close() end
@@ -331,12 +338,86 @@ function encode_vs(subs,sel)
 	  file=io.open(res.vsfm) if file==nil then t_error(res.vsfm.."\nERROR: File does not exist (vsfiltermod).",true) else file:close() end
 	end
 	
-	if scriptpath=="?script\\" then scriptpath=vpath end
-	local vsfile=io.open(scriptpath.."hardsub.vpy","w")
-	vsfile:write(vs)
-	vsfile:close()
-	source=quo(scriptpath.."hardsub.vpy")
-	
+	--avisynth for ffmpeg to generate mov
+	if res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)" then  --only use avs for encoding transparent mov (ProRes)
+		if res.audio then t_error("Audio will not be processed in this mod.",false) end
+		if res.ffmpegpath=="" then t_error("Please check your ffmpeg.",true) end
+		local xres, yres, ar, artype = aegisub.video_size()
+		if dummy_video then
+			framerate=frame_rate
+		else
+			framerate_gui={{x=0,y=0,class="label",label="Frame Rate"},
+						   {x=0,y=1,class="dropdown",name="fps",value=30.0,items={"24000/1001",24.0,25.0,"30000/1001",30.0,50.0,"60000/1001",60.0}},
+						   {x=1,y=1,class="label",label="24000/1001 = 23.976"},
+						   {x=1,y=2,class="label",label="30000/1001 = 29.97"},
+						   {x=1,y=3,class="label",label="60000/1001 = 59.94"}}
+			fps_btn,fps_res=ADD(framerate_gui,{"OK","Cancel"})
+			if fps_btn=="Cancel" then 
+			    os.rename(temp_sub_name1,org_sub_name1)
+				ak()
+			end
+			loadstring("framerate="..fps_res.fps)()
+			if type(framerate)~="number" then
+				t_error("Invalid value for frame rate.",true)
+			end
+			framerate=string.format("%0.3f",framerate)
+		end
+		encname=encname.."_"..framerate.."fps"
+		if not res.trim then
+			key_fr=aegisub.keyframes()
+			if #key_fr>1 then
+				GOP=key_fr[#key_fr]/(#key_fr-1)
+				approx_len=GOP*(1+#key_fr)
+			else
+				approx_len=1000
+			end
+			framen_gui={{x=0,y=0,class="label",label="Frame Number to Encode"},
+						   {x=0,y=1,class="intedit",name="framen",value=approx_len}}
+			frn_btn,frn_res=ADD(framen_gui,{"OK","Cancel"})
+			if frn_btn=="Cancel" then 
+				os.rename(temp_sub_name1,org_sub_name1)
+				ak()
+			end
+			enc_frame_n=frn_res.framen
+			encname=encname.."_0-"..frn_res.framen
+		else
+			enc_frame_n=res.ef
+		end
+		if res.filter1=="vsfilter" then
+			avs="LoadPlugin("..quo(res.vsf)..")\n"
+			avs=avs.."MaskSub("..quo(temp_sub_name1)..string.format(",%d,%d,%.3f,%d",xres,yres,framerate,enc_frame_n)..").FlipVertical()\n" 			
+		elseif res.filter1=="vsfiltermod" then
+			avs="LoadPlugin("..quo(res.vsfm)..")\n"
+			avs=avs.."MaskSubMod("..quo(temp_sub_name1)..string.format(",%d,%d,%.3f,%d",xres,yres,framerate,enc_frame_n)..").FlipVertical()\n"
+		else
+			avs=""
+		end
+		if res.sec then 
+			t_error("Only the first subtitle will be encoded.\nPlease encode the second one manually.",false)
+		end
+		if res.trim then
+			avs=avs..string.format("Trim(%d,0)\n",res.sf)
+		end
+		avsfile=io.open(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs","w")
+		avsfile:write(avs.."assumefps("..framerate..")\n")
+		avsfile:close()
+		rle_or_png={{x=0,y=0,width=2,class="label",label="Use qtrle encoder or png encoder"},
+					{x=0,y=1,class="dropdown",name="mov_encoder",value="png",items={"qtrle","png"}},
+					{x=0,y=3,width=2,height=2,class="label",label="qtrle - fast, lossless, small size. \nSupported by Premiere Pro before CC2018."},
+					{x=0,y=5,width=2,height=2,class="label",label="png - slow, lossless, big size. \nGood compatibility."}}
+		mov_btn,mov_enc_res=ADD(rle_or_png,{"OK","Cancel"})
+		if mov_btn=="Cancel" then 
+		    os.rename(temp_sub_name1,org_sub_name1)
+			ak()
+		end
+		if mov_enc_res.mov_encoder=="qtrle" then
+			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(encname)..".mov"
+		else
+			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(encname)..".mov"
+		end
+		if res.delavs then bat_code=bat_code.."\ndel "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs") end
+	end
+
 	--NeroAAC
 	neroaac=res.neroaac
 	nero_cmd=" -acodec aac "
@@ -352,7 +433,7 @@ function encode_vs(subs,sel)
 	end
 	
 	-- ffmpeg mux
-	if res.audio then
+	if res.audio and audioname~="" then
 		file=io.open(ffmpegpath)
 		if not file then 
 			t_error("Cannot locate ffmpeg.exe.",true)
@@ -387,24 +468,31 @@ function encode_vs(subs,sel)
 				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		end
+	else
+		merge="\n"
 	end
-
+	
+	if (res.GPUs=="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") or (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype==".mov(+alpha)") then
+		t_error("ffmpeg works for mov.",true)
+	end
+	
 	exe=res.GPUs
 	enc_bat_set=ADP("?user").."\\enc_set_"..exe..".conf"
 	file=io.open(enc_bat_set)
 	if not file then first_time=true else file:close() end
-	bat_code=encode_bat(exe,first_time)
-	if res.audio then bat_code=bat_code.."\n"..merge end
+	if (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=encode_bat(exe,first_time) end
+	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\n"..merge end
 	batch=scriptpath.."encode.bat"
-	if not dummy_video and res.del then
+	if not dummy_video and res.del and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
 	bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
-	if res.audio and res.delAV then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
-	if audiofile then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
+	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
+	if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
 	end
-	if res.delvs then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
+	if res.delvs and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
 	if res.pause then bat_code=bat_code.."\npause" end
 	if res.delbat then bat_code=bat_code.."\ndel "..quo(batch) end
+	
 	
 	local xfile=io.open(batch,"w")
 	xfile:write("chcp 65001\n"..bat_code)
@@ -415,20 +503,20 @@ function encode_vs(subs,sel)
 	info="Encode name: "..encname..res.vtype.."\nUse "..exe.." Encoder".."\nTrim: "..tr.."\n\nBatch file: "..batch.."\n\nYou can encode now or run this batch file later.\nIf encoding from Aegisub doesn't work,\njust run the batch file.\n\nEncode now?"
 	P=ADD({{class="label",label=info}},{"Yes","No"},{ok='Yes',close='No'})
 	if P=="Yes" then
-	aegisub.progress.title("Encoding...")
-	batch=batch:gsub("%=","^=")
-	os.execute(quo(batch))
-		if res.filter1=="vsfiltermod" then
-			os.rename(temp_sub_name1,org_sub_name1)
-			if not res.sec then
-				os.execute("rd "..root_path1.."\\aeg_encode_tmp")
-			end
-		end
-		if (res.filter2=="vsfiltermod" and res.sec) then
-			os.rename(temp_sub_name2,org_sub_name2)
+	    aegisub.progress.title("Encoding...")
+	    batch=batch:gsub("%=","^=")
+	    os.execute(quo(batch))
+	end
+	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") then
+		os.rename(temp_sub_name1,org_sub_name1)
+		if not res.sec then
 			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
 		end
 	end
+	if (res.filter2=="vsfiltermod" and res.sec) then
+		os.rename(temp_sub_name2,org_sub_name2)
+		os.execute("rd "..root_path2.."\\aeg_encode_tmp")
+	end	
 end
 
 function encode_bat(exe,first_time,from_setting)
