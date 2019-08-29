@@ -457,16 +457,19 @@ function encode_vs(subs,sel)
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		else
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
 				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
@@ -485,13 +488,22 @@ function encode_vs(subs,sel)
 	file=io.open(enc_bat_set)
 	if not file then first_time=true else file:close() end
 	if (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=encode_bat(exe,first_time) end
-	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\n"..merge end
-	batch=scriptpath.."encode.bat"
-	if not dummy_video and res.del and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
-	bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
+	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		bat_code=bat_code.."\n"..merge
+		if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :merge_exception" end
 	end
-	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
-	if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
+	batch=scriptpath.."encode.bat"
+	if not res.ignore_error then bat_code=bat_code.."\n:merge_exception" end
+	if not res.ignore_error then bat_code=bat_code.."\n:audio_exception" end
+	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
+	end
+	if not res.ignore_error then bat_code=bat_code.."\n:video_exception" end
+	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
+	end
+	if not dummy_video and res.del and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
 	if res.delvs and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
 	if res.pause then bat_code=bat_code.."\npause" end
