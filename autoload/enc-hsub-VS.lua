@@ -624,14 +624,14 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.dialog.display({{class="label",label="x264 setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
 			if not from_setting then
 			if res.VSPipepath=="" or res.xpath=="" then t_error("Please check your VSPipe and x264.",true) end
-			bat_code=quo(VSPipepath).." "..quo(scriptpath.."hardsub.vpy").." - --y4m | "..quo(xpath).." --crf "..result.crf.." --preset "..result.x264preset.." "..result.x264_other_para.."--demuxer y4m -o "..quo(target..encname..res.vtype).." -"
+			bat_code=quo(VSPipepath).." "..quo(scriptpath.."hardsub.vpy").." - --y4m | "..quo(xpath).." --crf "..result.crf.." --preset "..result.x264preset.." "..result.x264_other_para.." --demuxer y4m -o "..quo(target..encname..res.vtype).." -"
 			end
 		else
 			aegisub.cancel()
 		end
 	elseif exe=="VSPipe+x264" and not first_time then
-		if VSPipepath=="" or xpath=="" then t_error("Please check your VSPipe and x264.",true) end
-		bat_code=quo(VSPipepath).." "..quo(scriptpath.."hardsub.vpy").." - --y4m | "..quo(xpath).." --crf "..x264crf.." --preset "..x264preset.." "..x264_other_para.."--demuxer y4m -o "..quo(target..encname..res.vtype).." -"
+		if res.VSPipepath=="" or res.xpath=="" then t_error("Please check your VSPipe and x264.",true) end
+		bat_code=quo(VSPipepath).." "..quo(scriptpath.."hardsub.vpy").." - --y4m | "..quo(xpath).." --crf "..x264crf.." --preset "..x264preset.." "..x264_other_para.." --demuxer y4m -o "..quo(target..encname..res.vtype).." -"
 	end
 	
 	if exe=="NVEnc" and first_time then
@@ -644,14 +644,14 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.dialog.display({{class="label",label="NVEnc setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
 			if not from_setting then
 			if res.nvencpath=="" then t_error("Please check your NVEnc.",true) end
-			bat_code=quo(res.nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..result.NVbitrate.." --preset "..result.NVpreset.." -o "..quo(target..encname..res.vtype)
+			bat_code=quo(res.nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..result.NVbitrate.." --preset "..result.NVpreset.." "..result.NV_other_para.." -o "..quo(target..encname..res.vtype)
 			end
 		else
 			aegisub.cancel()
 		end
 	elseif exe=="NVEnc" and not first_time then
 		if nvencpath=="" then t_error("Please check your NVEnc.",true) end
-		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." -o "..quo(target..encname..res.vtype)
+		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." "..result.NV_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 		
 	if exe=="QSVEnc" and first_time then
@@ -665,9 +665,9 @@ function encode_bat(exe,first_time,from_setting)
 			if not from_setting then
 			if res.qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
 			if result.QSVmode=="VBR" then
-				bat_code=quo(res.qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.QSVbitrate.." --quality "..result.QSVpreset.." -o "..quo(target..encname..res.vtype)
+				bat_code=quo(res.qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.QSVbitrate.." --quality "..result.QSVpreset.." "..result.QSV_other_para.." -o "..quo(target..encname..res.vtype)
 			elseif result.QSVmode=="ICQ" then
-				bat_code=quo(res.qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..result.QSVICQ.." --quality "..result.QSVpreset.." -o "..quo(target..encname..res.vtype)
+				bat_code=quo(res.qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..result.QSVICQ.." --quality "..result.QSVpreset.." "..result.QSV_other_para.." -o "..quo(target..encname..res.vtype)
 			end
 			end
 		else
@@ -676,9 +676,9 @@ function encode_bat(exe,first_time,from_setting)
 	elseif exe=="QSVEnc" and not first_time then
 		if qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
 		if QSVmode=="VBR" then
-			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..QSVbitrate.." --quality "..QSVpreset.." -o "..quo(target..encname..res.vtype)
+			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..QSVbitrate.." --quality "..QSVpreset.." "..result.QSV_other_para.." -o "..quo(target..encname..res.vtype)
 		elseif QSVmode=="ICQ" then
-			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..QSVICQ.." --quality "..QSVpreset.." -o "..quo(target..encname..res.vtype)
+			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..QSVICQ.." --quality "..QSVpreset.." "..result.QSV_other_para.." -o "..quo(target..encname..res.vtype)
 		else 
 			aegisub.cancel()
 		end
@@ -694,14 +694,14 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.dialog.display({{class="label",label="VCEEnc setting was saved to:\n"..enc_bat_set}},{"OK"},{close='OK'})
 			if not from_setting then
 			if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
-			bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.VCEbitrate.." --quality "..result.VCEpreset.." -o "..quo(target..encname..res.vtype)
+			bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..result.VCEbitrate.." --quality "..result.VCEpreset.." "..result.VCE_other_para.." -o "..quo(target..encname..res.vtype)
 			end
 		else
 			aegisub.cancel()
 		end
 	elseif exe=="VCEEnc" and not first_time then
 		if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
-		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." -o "..quo(target..encname..res.vtype)
+		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..result.VCE_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 	return bat_code
 end
