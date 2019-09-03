@@ -415,9 +415,9 @@ function encode_vs(subs,sel)
 			ak()
 		end
 		if mov_enc_res.mov_encoder=="qtrle" then
-			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(encname)..".mov"
+			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
 		else
-			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(encname)..".mov"
+			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
 		end
 		if res.delavs then bat_code=bat_code.."\ndel "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs") end
 	end
@@ -494,6 +494,7 @@ function encode_vs(subs,sel)
 	if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
 	end
 	if res.delvs and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
+	bat_code=bat_code.."\nstart "..'"" '..quo(target)
 	if res.pause then bat_code=bat_code.."\npause" end
 	if res.delbat then bat_code=bat_code.."\ndel "..quo(batch) end
 	
@@ -676,9 +677,9 @@ function encode_bat(exe,first_time,from_setting)
 	elseif exe=="QSVEnc" and not first_time then
 		if qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
 		if QSVmode=="VBR" then
-			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..QSVbitrate.." --quality "..QSVpreset.." "..result.QSV_other_para.." -o "..quo(target..encname..res.vtype)
+			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..QSVbitrate.." --quality "..QSVpreset.." "..QSV_other_para.." -o "..quo(target..encname..res.vtype)
 		elseif QSVmode=="ICQ" then
-			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..QSVICQ.." --quality "..QSVpreset.." "..result.QSV_other_para.." -o "..quo(target..encname..res.vtype)
+			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --icq "..QSVICQ.." --quality "..QSVpreset.." "..QSV_other_para.." -o "..quo(target..encname..res.vtype)
 		else 
 			aegisub.cancel()
 		end
