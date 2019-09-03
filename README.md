@@ -1,6 +1,6 @@
 # aegisub_scripts  
 
-[English](./README.EN.md) 
+[English](./README.en.md) 
 
 ## autoload  
 ### enc-hsub-VS.lua
