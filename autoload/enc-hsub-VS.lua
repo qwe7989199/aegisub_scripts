@@ -665,7 +665,7 @@ function encode_bat(exe,first_time,from_setting)
 		end
 	elseif exe=="NVEnc" and not first_time then
 		if nvencpath=="" then t_error("Please check your NVEnc.",true) end
-		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." "..result.NV_other_para.." -o "..quo(target..encname..res.vtype)
+		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." "..NV_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 		
 	if exe=="QSVEnc" and first_time then
@@ -715,7 +715,7 @@ function encode_bat(exe,first_time,from_setting)
 		end
 	elseif exe=="VCEEnc" and not first_time then
 		if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
-		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..result.VCE_other_para.." -o "..quo(target..encname..res.vtype)
+		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..VCE_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 	return bat_code
 end
