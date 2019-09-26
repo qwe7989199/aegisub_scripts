@@ -288,7 +288,7 @@ function encode_vs(subs,sel)
 		root_path1=string.match(org_sub_name1,"[^\\]+")
 		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
 		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
-		os.execute('mklink '..temp_sub_name1..' '..org_sub_name1)
+		os.execute('mklink '..quo(temp_sub_name1)..' '..quo(org_sub_name1))
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
 	elseif res.filter1=="vsfilter" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
@@ -308,7 +308,7 @@ function encode_vs(subs,sel)
 			os.execute('mkdir '..root_path2.."\\aeg_encode_tmp")
 		end
 		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\sub2_"..time_stamp..".ass"
-		os.execute('mklink '..temp_sub_name2..' '..org_sub_name2)
+		os.execute('mklink '..quo(temp_sub_name2)..' '..quo(org_sub_name2))
 		ts2="clip=core.vsfm.TextSubMod" 
 		end
 	end
