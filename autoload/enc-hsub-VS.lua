@@ -288,7 +288,7 @@ function encode_vs(subs,sel)
 		root_path1=string.match(org_sub_name1,"[^\\]+")
 		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
 		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
-		os.rename(org_sub_name1,temp_sub_name1)
+		os.execute('mklink '..temp_sub_name1..' '..org_sub_name1)
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
 	elseif res.filter1=="vsfilter" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
@@ -308,7 +308,7 @@ function encode_vs(subs,sel)
 			os.execute('mkdir '..root_path2.."\\aeg_encode_tmp")
 		end
 		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\sub2_"..time_stamp..".ass"
-		os.rename(org_sub_name2,temp_sub_name2)
+		os.execute('mklink '..temp_sub_name2..' '..org_sub_name2)
 		ts2="clip=core.vsfm.TextSubMod" 
 		end
 	end
@@ -357,7 +357,7 @@ function encode_vs(subs,sel)
 						   {x=1,y=3,class="label",label="60000/1001 = 59.94"}}
 			fps_btn,fps_res=ADD(framerate_gui,{"OK","Cancel"})
 			if fps_btn=="Cancel" then 
-			    os.rename(temp_sub_name1,org_sub_name1)
+				os.execute('del '..quo(temp_sub_name1))
 				ak()
 			end
 			loadstring("framerate="..fps_res.fps)()
@@ -379,7 +379,7 @@ function encode_vs(subs,sel)
 						   {x=0,y=1,class="intedit",name="framen",value=approx_len}}
 			frn_btn,frn_res=ADD(framen_gui,{"OK","Cancel"})
 			if frn_btn=="Cancel" then 
-				os.rename(temp_sub_name1,org_sub_name1)
+				os.execute('del '..quo(temp_sub_name1))
 				ak()
 			end
 			enc_frame_n=frn_res.framen
@@ -411,7 +411,7 @@ function encode_vs(subs,sel)
 					{x=0,y=5,width=2,height=2,class="label",label="png - slow, lossless, big size. \nGood compatibility."}}
 		mov_btn,mov_enc_res=ADD(rle_or_png,{"OK","Cancel"})
 		if mov_btn=="Cancel" then 
-		    os.rename(temp_sub_name1,org_sub_name1)
+			os.execute('del '..quo(temp_sub_name1))
 			ak()
 		end
 		if mov_enc_res.mov_encoder=="qtrle" then
@@ -531,13 +531,13 @@ function encode_vs(subs,sel)
 	    os.execute(quo(batch))
 	end
 	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") then
-		os.rename(temp_sub_name1,org_sub_name1)
+		os.execute('del '..quo(temp_sub_name1))
 		if not res.sec then
 			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
 		end
 	end
 	if (res.filter2=="vsfiltermod" and res.sec) then
-		os.rename(temp_sub_name2,org_sub_name2)
+		os.execute('del '..quo(temp_sub_name2))
 		os.execute("rd "..root_path2.."\\aeg_encode_tmp")
 	end	
 end
