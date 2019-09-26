@@ -472,7 +472,7 @@ function encode_vs(subs,sel)
 				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
-				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
+				merge=quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		end
 	else
