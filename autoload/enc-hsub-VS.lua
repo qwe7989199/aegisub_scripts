@@ -488,6 +488,7 @@ function encode_vs(subs,sel)
 	file=io.open(enc_bat_set)
 	if not file then first_time=true else file:close() end
 	if (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=encode_bat(exe,first_time) end
+	if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :video_exception" end
 	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
 		bat_code=bat_code.."\n"..merge
 		if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :merge_exception" end
