@@ -288,7 +288,7 @@ function encode_vs(subs,sel)
 		root_path1=string.match(org_sub_name1,"[^\\]+")
 		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
 		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
-		os.rename(org_sub_name1,temp_sub_name1)
+		os.execute('mklink '..quo(temp_sub_name1)..' '..quo(org_sub_name1))
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
 	elseif res.filter1=="vsfilter" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
@@ -308,7 +308,7 @@ function encode_vs(subs,sel)
 			os.execute('mkdir '..root_path2.."\\aeg_encode_tmp")
 		end
 		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\sub2_"..time_stamp..".ass"
-		os.rename(org_sub_name2,temp_sub_name2)
+		os.execute('mklink '..quo(temp_sub_name2)..' '..quo(org_sub_name2))
 		ts2="clip=core.vsfm.TextSubMod" 
 		end
 	end
@@ -357,7 +357,7 @@ function encode_vs(subs,sel)
 						   {x=1,y=3,class="label",label="60000/1001 = 59.94"}}
 			fps_btn,fps_res=ADD(framerate_gui,{"OK","Cancel"})
 			if fps_btn=="Cancel" then 
-			    os.rename(temp_sub_name1,org_sub_name1)
+				os.execute('del '..quo(temp_sub_name1))
 				ak()
 			end
 			loadstring("framerate="..fps_res.fps)()
@@ -379,7 +379,7 @@ function encode_vs(subs,sel)
 						   {x=0,y=1,class="intedit",name="framen",value=approx_len}}
 			frn_btn,frn_res=ADD(framen_gui,{"OK","Cancel"})
 			if frn_btn=="Cancel" then 
-				os.rename(temp_sub_name1,org_sub_name1)
+				os.execute('del '..quo(temp_sub_name1))
 				ak()
 			end
 			enc_frame_n=frn_res.framen
@@ -411,7 +411,7 @@ function encode_vs(subs,sel)
 					{x=0,y=5,width=2,height=2,class="label",label="png - slow, lossless, big size. \nGood compatibility."}}
 		mov_btn,mov_enc_res=ADD(rle_or_png,{"OK","Cancel"})
 		if mov_btn=="Cancel" then 
-		    os.rename(temp_sub_name1,org_sub_name1)
+			os.execute('del '..quo(temp_sub_name1))
 			ak()
 		end
 		if mov_enc_res.mov_encoder=="qtrle" then
@@ -457,19 +457,22 @@ function encode_vs(subs,sel)
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		else
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
 				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
-				merge=quo(ffmpegpath).." -i "..quo(vfull).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
+				merge=quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(afull).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		end
 	else
@@ -483,15 +486,30 @@ function encode_vs(subs,sel)
 	exe=res.GPUs
 	enc_bat_set=ADP("?user").."\\enc_set_"..exe..".conf"
 	file=io.open(enc_bat_set)
-	if not file then first_time=true else file:close() end
-	if (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=encode_bat(exe,first_time) end
-	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\n"..merge end
-	batch=scriptpath.."encode.bat"
-	if not dummy_video and res.del and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
-	bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
+	if not file then
+		first_time=true
+	else
+		first_time=false
+		file:close()
 	end
-	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
-	if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
+	if (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=encode_bat(exe,first_time) end
+	if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :video_exception" end
+	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		bat_code=bat_code.."\n"..merge
+		if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :merge_exception" end
+	end
+	batch=scriptpath.."encode.bat"
+	if not res.ignore_error then bat_code=bat_code.."\n:merge_exception" end
+	if not res.ignore_error then bat_code=bat_code.."\n:audio_exception" end
+	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
+	end
+	if not res.ignore_error then bat_code=bat_code.."\n:video_exception" end
+	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
+	end
+	if not dummy_video and res.del and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+		bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
 	if res.delvs and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
 	bat_code=bat_code.."\nstart "..'"" '..quo(target)
@@ -513,13 +531,13 @@ function encode_vs(subs,sel)
 	    os.execute(quo(batch))
 	end
 	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") then
-		os.rename(temp_sub_name1,org_sub_name1)
+		os.execute('del '..quo(temp_sub_name1))
 		if not res.sec then
 			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
 		end
 	end
 	if (res.filter2=="vsfiltermod" and res.sec) then
-		os.rename(temp_sub_name2,org_sub_name2)
+		os.execute('del '..quo(temp_sub_name2))
 		os.execute("rd "..root_path2.."\\aeg_encode_tmp")
 	end	
 end
@@ -652,7 +670,7 @@ function encode_bat(exe,first_time,from_setting)
 		end
 	elseif exe=="NVEnc" and not first_time then
 		if nvencpath=="" then t_error("Please check your NVEnc.",true) end
-		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." "..result.NV_other_para.." -o "..quo(target..encname..res.vtype)
+		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." "..NV_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 		
 	if exe=="QSVEnc" and first_time then
@@ -702,7 +720,7 @@ function encode_bat(exe,first_time,from_setting)
 		end
 	elseif exe=="VCEEnc" and not first_time then
 		if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
-		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..result.VCE_other_para.." -o "..quo(target..encname..res.vtype)
+		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..VCE_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 	return bat_code
 end
