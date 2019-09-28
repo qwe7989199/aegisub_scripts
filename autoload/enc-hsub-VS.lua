@@ -456,19 +456,19 @@ function encode_vs(subs,sel)
 			--mp4/mkv use m4a/mka
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
-				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -ar 44100 -vn "..nero_cmd..quo(audiofile)
 				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
 				audiofile=target..encname..".m4a"
-				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				audiosplit=quo(ffmpegpath).." -ss "..timec1.." -t "..dur_time.." -i "..quo(afull).." -ar 44100 -vn "..nero_cmd..quo(audiofile)
 				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mkv")
 			end
 		else
 			if res.vtype==".mp4" then
 				audiofile=target..encname..".m4a"
-				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -vn "..nero_cmd..quo(audiofile)
+				audiosplit=quo(ffmpegpath).." -i "..quo(afull).." -ar 44100 -vn "..nero_cmd..quo(audiofile)
 				if not res.ignore_error then audiosplit=audiosplit.."\n@if not %errorlevel%==0 goto :audio_exception" end
 				merge=audiosplit.."\n"..quo(ffmpegpath).." -i "..quo(target..encname..res.vtype).." -i "..quo(audiofile).." -c copy -map_chapters -1 "..quo(target..encname.."_muxed.mp4")
 			else
