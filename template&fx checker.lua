@@ -2,9 +2,9 @@ local tr = aegisub.gettext
 script_name = tr"Check Tags"
 script_description = tr"Check tags inside template line or fx line"
 script_author = "domo"
-script_version = "0.9"
+script_version = "0.91"
 script_created = "2019/06/03"
-script_last_updated = "2016/06/05"
+script_last_updated = "2019/10/01"
 
 local position_tags = {"move","pos","mover","moves3","moves4"}
 local work_with_t = {"bord","xbord","ybord","shad","xshad","yshad","be","blur","fs","fscx","fscy",
@@ -42,7 +42,7 @@ local function tag_counter(tbl)
 	return entry_num
 end
 
-function is_include(value, tbl)
+local function is_include(value, tbl)
     for k,v in _G.ipairs(tbl) do
       if v == value then
           return true
@@ -51,7 +51,7 @@ function is_include(value, tbl)
     return false
 end
 
-function delete_empty(tbl)
+local function delete_empty(tbl)
 	for i=#tbl,1,-1 do
 		if tbl[i] == "" or tbl[i]==nil then
 			table.remove(tbl, i)
@@ -65,6 +65,21 @@ local function checktwo(tag1, tag2)
 	local p2_s, _, p2_tag = string.find(str, tag2.."%(")
 	if (p1_s and p2_s) and (p1_s~=p2_s) then 
 		aegisub.debug.out("Conflict between ["..tag1.."] and ["..tag2.."].\n")
+	end
+end
+
+local function check_fade(tags_str)
+	if string.find(tags_str,"fade") ~= nil then
+		a1,a2,a3,t1,t2,t3,t4=string.match(tags_str,"fade%(([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)%)")
+		if not (a1 and a2 and a3 and t1 and t2 and t3 and t4) then 
+				aegisub.debug.out("Incomplete [fade] found.\n")
+		end
+	end
+end
+
+local function check_fullwidth(tags_str)
+	if string.find(tags_str,"[\1-\127][\194-\244][\128-\191]") ~= nil then
+		aegisub.debug.out("Fullwidth character(s) found.\n")
 	end
 end
 
@@ -171,7 +186,10 @@ function check(subtitles, selected_lines)
 		else
 			aegisub.debug.out("[Line #"..tostring(index-dialogue_start+1).."]: \n")
 			str = string.gsub(l.text,"%![^%!]*%!","")
+			tag_str = string.gsub(str,"}[^{]+[${]","")
+			check_fullwidth(tag_str)
 			checktwo("fade","fad")
+			check_fade(str)
 			--check pos move mover moves3/4
 			for i = 1,#position_tags do
 				for j = 1,#position_tags do
