@@ -3,7 +3,7 @@
 ## autoload  
 ### enc-hsub-VS.lua
 Encode use vapoursynth+x264/NVEnc/QSVEnc/VCEEnc.  
-Encode subtitle to mov file with alpha channel(ffmpeg and avisynth required).
+Encode subtitle to mov file with alpha channel, ffmpeg and Avisynth(tested on Avisynth+ r2772) required.
 
 ## Add k Tags.lua  
 Generate K by :  
