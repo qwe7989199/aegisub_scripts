@@ -1,9 +1,9 @@
-﻿local tr = aegisub.gettext
+local tr = aegisub.gettext
 
 script_name = tr"Delete FX"
 script_description = tr"Removes all FX lines by range"
 script_author = "domo"
-script_version = "1"
+script_version = "1.0"
 
 function delete_fx(subs)
     for i = 1, #subs do
@@ -18,8 +18,9 @@ function delete_fx(subs)
 			break
         end
     end
-	subs.deleterange(idx_start,idx_end)
+	if idx_start and idx_end then
+		subs.deleterange(idx_start,idx_end)
+	end
 end
-
 
 aegisub.register_macro(script_name, script_description, delete_fx)
