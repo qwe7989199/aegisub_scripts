@@ -34,7 +34,7 @@ function time_scaling(subtitles, selected_lines)
 		l.end_time   = ratio * l.end_time
 		l.text       = string.gsub(l.text, "{\\k(%d+)}",function(kdur) return string.format("{\\k%d}",ratio * kdur) end)
 		l.text       = error_handler(l.text, l.end_time - l.start_time)
-		l.effect     = string.format("%.2fx",ratio)
+		l.effect     = string.format(l.effect.." %.2f x",ratio)
 		subtitles.append(l)
 	end
 	aegisub.debug.out("Done.")
