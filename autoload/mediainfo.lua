@@ -43,11 +43,7 @@ local function utf16_to_utf8(s)
 	return ws
 end
 
-
-function mediainfo()
-	local filePath = aegisub.dialog.open('Select File','','','',false,true)
-	if not filePath then aegisub.cancel() end
-	filePath = utf8_to_utf16(filePath)
+function mediainfo(filePath)
 	--  print Mediainfo version  to console
 	aegisub.debug.out("TEST0:[MediaInfo Version]\n"..ffi.string(mediaInfo.MediaInfoA_Option(nil,"Info_Version", ""))..'\n\n')
 	-- create MediaInfo Instance
@@ -57,16 +53,54 @@ function mediainfo()
 	local generalInfo = mediaInfo.MediaInfo_Inform(mi,1)
 	generalInfo = utf16_to_utf8(generalInfo)
 	-- close
-	mediaInfo.MediaInfoA_Option(mi,"Inform","General;%Duration/String1%")
-	local durationInfo = mediaInfo.MediaInfoA_Inform(mi,1)
+	-- mediaInfo.MediaInfoA_Option(mi,"Inform","General;%Duration/String1%")
+	-- local durationInfo = mediaInfo.MediaInfoA_Inform(mi,1)
 	--get general info
 	aegisub.debug.out("TEST1:[General Information]\n"..ffi.string(generalInfo).."\n\n")
 	--test for single item
-	aegisub.debug.out("TEST2:[Single Information]\n".."准确时长: "..ffi.string(durationInfo).."\n\n")
+	-- aegisub.debug.out("TEST2:[Single Information]\n".."准确时长: "..ffi.string(durationInfo).."\n\n")
 	-- close handle
 	mediaInfo.MediaInfo_Close (mi) 
 	-- delete MediaInfo instance
 	mediaInfo.MediaInfo_Delete (mi)
 end
 
-aegisub.register_macro(script_name, script_description, mediainfo)
+local function audioInfo()
+	properties = aegisub.project_properties()
+	local filePath = properties.audio_file
+	if filePath:sub(1,11)=="dummy-audio" then
+		aegisub.debug.out("dummy audio！",3)
+		aegisub.cancel()
+	elseif filePath=="" then
+		filePath = aegisub.dialog.open('Select File','','','',false,true)
+		if not filePath then aegisub.cancel() end
+	end
+	filePath = utf8_to_utf16(filePath)
+	mediainfo(filePath)
+end
+
+local function videoInfo()
+	properties = aegisub.project_properties()
+	local filePath = properties.video_file
+	if filePath:sub(1,6)=="?dummy" then
+		aegisub.debug.out("dummy video！",3)
+		aegisub.cancel()
+	elseif filePath=="" then
+		filePath = aegisub.dialog.open('Select File','','','',false,true)
+		if not filePath then aegisub.cancel() end
+	end
+	filePath = utf8_to_utf16(filePath)
+	mediainfo(filePath)
+end
+
+local function otherInfo()
+	local filePath = aegisub.dialog.open('Select File','','','',false,true)
+	if not filePath then aegisub.cancel() end
+	filePath = utf8_to_utf16(filePath)
+	mediainfo(filePath)
+end
+
+
+aegisub.register_macro(script_name.."/Video", script_description, audioInfo)
+aegisub.register_macro(script_name.."/Audio", script_description, videoInfo)
+aegisub.register_macro(script_name.."/Other", script_description, otherInfo)
