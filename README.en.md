@@ -41,3 +41,11 @@ File with _chi_ suffix is its Chinese version.
 Requirement:https://github.com/speedata/luaqrcode/blob/master/qrencode.lua  
 Convert line text to QRCode.  
 You can also define the size, transparency and color of the QRCode now.  
+
+## MediaInfo.lua    
+
+Requirement:https://github.com/kawaCat/MediaInfo-For-LuaJIT
+and mediainfo.dll(32bit) [binary](https://mediaarea.net/download/binary/libmediainfo0/20.03/MediaInfo_DLL_20.03_Windows_i386_WithoutInstaller.7z).  
+Get media information in Aegisub.  
+Solve unicode filename support problem by C functions on Windows.  
+It's just an example.  
