@@ -41,3 +41,10 @@
 依赖：github.com/speedata/luaqrcode/blob/master/qrencode.lua  
 将行内文字转化成二维码(QRCode).  
 支持定义二维码大小，颜色和透明度。  
+
+## MediaInfo.lua    
+依赖:https://github.com/kawaCat/MediaInfo-For-LuaJIT   
+和 mediainfo.dll(32bit) 二进制文件.   
+在Aegisub中查看媒体文件的信息.   
+利用C函数解决了Unicode文件名的支持问题(Windows Only)  
+注意这只是一个例子.   
