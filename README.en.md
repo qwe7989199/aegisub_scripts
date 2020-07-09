@@ -49,3 +49,7 @@ and mediainfo.dll(32bit) [binary](https://mediaarea.net/download/binary/libmedia
 Get media information in Aegisub.  
 Solve unicode filename support problem by C functions on Windows.  
 It's just an example.  
+
+## bcc_importer.lua  
+Requirement:https://github.com/rxi/json.lua  
+Convert Bilibili's CC subtitle to ASS format.
