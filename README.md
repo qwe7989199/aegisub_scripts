@@ -47,3 +47,8 @@
 在Aegisub中查看媒体文件的信息.   
 利用C函数解决了Unicode文件名的支持问题(Windows Only)  
 注意这只是一个例子.   
+
+## bcc_importer.lua   
+依赖:https://github.com/rxi/json.lua  
+把Bilibili的CC字幕格式转换成ASS字幕格式.  
+
