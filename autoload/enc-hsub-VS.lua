@@ -63,7 +63,7 @@ script_author="domo"
 script_version="1.2"
 
 local dummy_duration=600  --maximum dummy video duration threshold (second)
-local neroquality=0.5
+local neroquality=0.85
 include("utils.lua")
 
 function encode_vs(subs,sel)
@@ -283,14 +283,16 @@ function encode_vs(subs,sel)
 	time_stamp=os.date("%y%m%d%H%M%S", os.time())
 	-- vapoursynth
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
-	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") then 
+	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or (res.vtype==".mp4" and res.GPUs=="ffmpeg(double mp4)") then 
 		org_sub_name1=res.first
 		root_path1=string.match(org_sub_name1,"[^\\]+")
 		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
 		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
 		os.execute('mklink '..quo(temp_sub_name1)..' '..quo(org_sub_name1))
+		-- text1="core.std.LoadPlugin(path=r"..quo(res.vsfm)..")\n"
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
-	elseif res.filter1=="vsfilter" then --create temp subtitle file in case the original file name contains character vsfiltermod doesn't support.
+	elseif res.filter1=="vsfilter" then
+		text1="core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
 	else
 		text1=""
@@ -343,7 +345,7 @@ function encode_vs(subs,sel)
 	end
 	
 	--avisynth for ffmpeg to generate mov
-	if res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)" then  --only use avs for encoding transparent mov (ProRes)
+	if (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or res.GPUs=="ffmpeg(double mp4)" then  --only use avs for encoding transparent mov (ProRes)
 		if res.audio then t_error("Audio will not be processed in this mod.",false) end
 		if res.ffmpegpath=="" then t_error("Please check your ffmpeg.",true) end
 		local xres, yres, ar, artype = aegisub.video_size()
@@ -405,19 +407,36 @@ function encode_vs(subs,sel)
 		avsfile=io.open(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs","w")
 		avsfile:write(avs.."assumefps("..framerate..")\n")
 		avsfile:close()
-		rle_or_png={{x=0,y=0,width=2,class="label",label="Use qtrle encoder or png encoder"},
-					{x=0,y=1,class="dropdown",name="mov_encoder",value="png",items={"qtrle","png"}},
-					{x=0,y=3,width=2,height=2,class="label",label="qtrle - fast, lossless, small size. \nSupported by Premiere Pro before CC2018."},
-					{x=0,y=5,width=2,height=2,class="label",label="png - slow, lossless, big size. \nGood compatibility."}}
-		mov_btn,mov_enc_res=ADD(rle_or_png,{"OK","Cancel"})
-		if mov_btn=="Cancel" then 
-			os.execute('del '..quo(temp_sub_name1))
-			ak()
+		if res.GPUs=="ffmpeg(mov with alpha)" then
+			rle_or_png={{x=0,y=0,width=2,class="label",label="Use qtrle encoder or png encoder"},
+						{x=0,y=1,class="dropdown",name="mov_encoder",value="png",items={"qtrle","png"}},
+						{x=0,y=3,width=2,height=2,class="label",label="qtrle - fast, lossless, small size. \nSupported by Premiere Pro before CC2018."},
+						{x=0,y=5,width=2,height=2,class="label",label="png - slow, lossless, big size. \nGood compatibility."}}
+			mov_btn,mov_enc_res=ADD(rle_or_png,{"OK","Cancel"})
+			if mov_btn=="Cancel" then 
+				os.execute('del '..quo(temp_sub_name1))
+				ak()
+			end
+		elseif res.GPUs=="ffmpeg(double mp4)" then
+			mp4quality={{x=0,y=0,width=2,class="label",label="Choose the quality of mp4 file."},
+						{x=0,y=1,class="dropdown",name="mp4quality",value="Medium",items={"High","Medium","Low"}},
+						{x=0,y=3,width=2,height=2,class="label",label="High - yuv444p\nMedium - yuv422p\nBase - yuv420p"},}
+			mp4_btn,mp4_enc_res=ADD(mp4quality,{"OK","Cancel"})
+			if mp4_btn=="Cancel" then 
+				os.execute('del '..quo(temp_sub_name1))
+				ak()
+			end
 		end
-		if mov_enc_res.mov_encoder=="qtrle" then
-			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
+		if res.GPUs=="ffmpeg(double mp4)" then
+			preset ={['High']='yuv444p',['Medium']='yuv422p',['Low']='yuv420p'}
+			quality = mp4_enc_res.mp4quality
+			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -r "..framerate.." -vsync cfr -filter_complex split[v1][v2];[v2]alphaextract[o2];[v1]format="..preset[quality].."[o1] -map [o1] -g 1 "..quo(target..encname.."_sub.mp4").." -map [o2] -g 1 "..quo(target..encname.."_alpha.mp4")
 		else
-			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
+			if mov_enc_res.mov_encoder=="qtrle" then
+				bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
+			else
+				bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
+			end
 		end
 		if res.delavs then bat_code=bat_code.."\ndel "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs") end
 	end
@@ -482,6 +501,9 @@ function encode_vs(subs,sel)
 	if (res.GPUs=="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") or (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype==".mov(+alpha)") then
 		t_error("ffmpeg works for mov.",true)
 	end
+	if (res.GPUs=="ffmpeg(double mp4)" and res.vtype~=".mp4") then
+		t_error("mp4 is required.",true)
+	end
 	
 	exe=res.GPUs
 	enc_bat_set=ADP("?user").."\\enc_set_"..exe..".conf"
@@ -492,26 +514,27 @@ function encode_vs(subs,sel)
 		first_time=false
 		file:close()
 	end
-	if (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=encode_bat(exe,first_time) end
+	use_ffmpeg = string.find(res.GPUs,"ffmpeg")
+	if not use_ffmpeg then bat_code=encode_bat(exe,first_time) end
 	if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :video_exception" end
-	if res.audio and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+	if res.audio and not use_ffmpeg then
 		bat_code=bat_code.."\n"..merge
 		if not res.ignore_error then bat_code=bat_code.."\n@if not %errorlevel%==0 goto :merge_exception" end
 	end
 	batch=scriptpath.."encode.bat"
 	if not res.ignore_error then bat_code=bat_code.."\n:merge_exception" end
 	if not res.ignore_error then bat_code=bat_code.."\n:audio_exception" end
-	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+	if res.audio and audioname~="" and res.delAV and not use_ffmpeg then
 		if audiofile and audioname~="" then bat_code=bat_code.."\ndel "..quo(audiofile) audiofile=nil end
 	end
 	if not res.ignore_error then bat_code=bat_code.."\n:video_exception" end
-	if res.audio and audioname~="" and res.delAV and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+	if res.audio and audioname~="" and res.delAV and not use_ffmpeg then
 		bat_code=bat_code.."\ndel "..quo(target..encname..res.vtype)
 	end
-	if not dummy_video and res.del and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then
+	if not dummy_video and res.del and not use_ffmpeg then
 		bat_code=bat_code.."\ndel "..quo(target..videoname..".ffindex")
 	end
-	if res.delvs and (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
+	if res.delvs and not use_ffmpeg then bat_code=bat_code.."\ndel "..quo(scriptpath.."hardsub.vpy") end
 	bat_code=bat_code.."\nstart "..'"" '..quo(target)
 	if res.pause then bat_code=bat_code.."\npause" end
 	if res.delbat then bat_code=bat_code.."\ndel "..quo(batch) end
@@ -530,7 +553,7 @@ function encode_vs(subs,sel)
 	    batch=batch:gsub("%=","^=")
 	    os.execute(quo(batch))
 	end
-	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") then
+	if res.filter1=="vsfiltermod" or use_ffmpeg then
 		os.execute('del '..quo(temp_sub_name1))
 		if not res.sec then
 			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
