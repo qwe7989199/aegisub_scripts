@@ -52,3 +52,6 @@
 依赖:https://github.com/rxi/json.lua  
 把Bilibili的CC字幕格式转换成ASS字幕格式.  
 
+## CNSpellChecker.lua   
+依赖:https://github.com/rxi/json.lua 和 https://github.com/LPGhatguy/luajit-request    
+利用百度的NLP相关API，对中文进行错误检查。   
