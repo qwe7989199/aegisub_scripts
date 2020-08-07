@@ -15,7 +15,7 @@ void Sleep(int ms);
 ]]
 
 -- Necessary
-local AccessToken = "24.6885376debf4ee10b148a9c471451293.2592000.1599354217.282335-21841973"
+local AccessToken = ""
 
 function split(str, split_char)
 	local sub_str_tab = {}
