@@ -284,38 +284,20 @@ function encode_vs(subs,sel)
 	-- vapoursynth
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
 	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or (res.vtype==".mp4" and res.GPUs=="ffmpeg(double mp4)") then 
-		org_sub_name1=res.first
-		root_path1=string.match(org_sub_name1,"[^\\]+")
-		os.execute('mkdir '..root_path1.."\\aeg_encode_tmp")
-		temp_sub_name1=root_path1.."\\aeg_encode_tmp\\sub1_"..time_stamp..".ass"
-		os.execute('mklink '..quo(temp_sub_name1)..' '..quo(org_sub_name1))
-		-- text1="core.std.LoadPlugin(path=r"..quo(res.vsfm)..")\n"
-		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(temp_sub_name1)..")\n"	vsm=2
+		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(res.first)..")\n"	vsm=2
 	elseif res.filter1=="vsfilter" then
-		text1="core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
+		-- text1="core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
 	else
 		text1=""
 	end
 	if res.filter2=="vsfilter" then 
-		filth2=res.vsf 
 		ts2="clip=core.vsf.TextSub"
-		temp_sub_name2=res.second
 	else
-		if res.sec then 
-		filth2=res.vsfm
-		org_sub_name2=res.second
-		root_path2=string.match(org_sub_name2,"[^\\]+")
-		if res.filter1=="vsfilter" then
-			os.execute('mkdir '..root_path2.."\\aeg_encode_tmp")
-		end
-		temp_sub_name2=root_path2.."\\aeg_encode_tmp\\sub2_"..time_stamp..".ass"
-		os.execute('mklink '..quo(temp_sub_name2)..' '..quo(org_sub_name2))
 		ts2="clip=core.vsfm.TextSubMod" 
-		end
 	end
 	if res.sec then 
-		text2=ts2.."(clip,r"..quo(temp_sub_name2)..")\n" 
+		text2=ts2.."(clip,r"..quo(res.second)..")\n" 
 	else 
 		text2="" 
 	end
@@ -553,16 +535,6 @@ function encode_vs(subs,sel)
 	    batch=batch:gsub("%=","^=")
 	    os.execute(quo(batch))
 	end
-	if res.filter1=="vsfiltermod" or use_ffmpeg then
-		os.execute('del '..quo(temp_sub_name1))
-		if not res.sec then
-			os.execute("rd "..root_path1.."\\aeg_encode_tmp")
-		end
-	end
-	if (res.filter2=="vsfiltermod" and res.sec) then
-		os.execute('del '..quo(temp_sub_name2))
-		os.execute("rd "..root_path2.."\\aeg_encode_tmp")
-	end	
 end
 
 function encode_bat(exe,first_time,from_setting)
