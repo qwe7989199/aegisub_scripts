@@ -54,6 +54,8 @@ GUI_Config={['avs']=
 	{x=7,y=1,width=3,class="edit",name="xpath",value=xpath or "",hint="Need to fill when use VSPipe"},
 	{x=0,y=2,class="label",label="Which to use:"},
 	{x=1,y=2,width=3,class="dropdown",name="GPUs",value=GPUs,items={"NVEnc","QSVEnc","VCEEnc","VSPipe+x264","ffmpeg(mov with alpha)","ffmpeg(double mp4)"}},
+	{x=4,y=2,class="label",label="Source filter:"},
+	{x=5,y=2,class="dropdown",name="sourcefilter",value=source_filter or "lsmash",items={"ffms2","lsmash"},hint="make sure you have them in the plugin dir of vapoursynth"},
 	{x=6,y=2,class="label",name="VSPipe",label="VSPipe.exe:"},
 	{x=7,y=2,width=3,class="edit",name="VSPipepath",value=VSPipepath or "",hint="Encode use CPU"},
 	{x=0,y=3,class="label",name="Nvidia",label="NVEncC64.exe:"},
