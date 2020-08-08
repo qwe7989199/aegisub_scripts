@@ -5,7 +5,7 @@
 ## autoload  
 ### enc-hsub-VS.lua
 使用 vapoursynth+x264/NVEnc/QSVEnc/VCEEnc 中的一种进行视频压制(硬字幕)。  
-或者将字幕压制为透明通道的mov文件,依赖于ffmpeg和Avisynth(测试于Avisynth+ r2772)。
+或者将字幕压制为透明通道的mov文件(双MP4文件),依赖于ffmpeg和Avisynth(测试于Avisynth+ r2772)。
 
 ## Add k Tags.lua  
 按以下方式中的一种生成K :  
