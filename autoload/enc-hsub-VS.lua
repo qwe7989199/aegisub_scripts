@@ -11,7 +11,7 @@
 		- Intel GPU (Quick Sync Video QSVEncC64.exe)
 		- NVIDIA GPU (Nvidia Video Encoding NVEncC64.exe)
 		- or VSPipe.exe+x264.exe (CPU)
-		- ffmpeg (only for mov file)
+		- ffmpeg (avisynth for generating transparent mov or double mp4 files)
 
 	- hardsub 0 or 1 or 2 subtitle file(s) using
 		- vsfilter
@@ -22,7 +22,7 @@
 		- NeroAAC (HE-AAC)
 		
 	- encode to
-		- mp4
+		- mp4 (or two mp4 files, one yuv, one y, which can be used in Premiere etc.)
 		- mkv (original audio will be preserved if not trim)
 		- mov (with alpha channel)
 
@@ -45,8 +45,13 @@
 			- preset
 			- crf
 		- ffmpeg
-			- qtrle (fast, small, lossless, not supported after Adobe Premiere CC2018)
-			- png (slow, big, good compatibility)
+			- mov
+				- qtrle (fast, small, lossless, not supported after Adobe Premiere CC2018)
+				- png (slow, big, good compatibility)
+			- double mp4
+				- High - YUV444
+				- Medium - YUV422
+				- Low - YUV420
 
 	Requirements:
 	- NegativeEncoder's directory structure (https://github.com/zyzsdy/NegativeEncoder)
@@ -55,12 +60,13 @@
 	- neroAacEnc.exe
 	- [vsfilter.dll] (https://github.com/HomeOfVapourSynthEvolution/VSFilter/releases) 
 	- and/or [vsfiltermod.dll] (https://github.com/sorayuki/VSFilterMod/releases) for hardsubbing
+	- and [AviSynth] (https://github.com/AviSynth/AviSynthPlus/releases) 64bit version is required.
 --]]
 
 script_name="Encode - Hardsub - VapourSynth"
 script_description="Encode a clip w/o hardsubs"
 script_author="domo"
-script_version="1.2"
+script_version="1.3"
 
 local dummy_duration=600  --maximum dummy video duration threshold (second)
 local neroquality=0.85
@@ -268,8 +274,7 @@ function encode_vs(subs,sel)
 	if res.targ=="Custom:" then target=res.target end
 	if res.filter1=="none" then res.sec=false encname=encname:gsub("_hardsub","_encode") end
 	if res.trim then encname=encname.."_"..res.sf.."-"..res.ef encname=encname:gsub("_encode","") end
-	
-	
+
 	if not dummy_video then
 		file=io.open(vfull)
 		if file==nil then 
@@ -283,10 +288,14 @@ function encode_vs(subs,sel)
 	time_stamp=os.date("%y%m%d%H%M%S", os.time())
 	-- vapoursynth
 	if res.filter1~="none" and res.first:match("%?script\\") then t_error("ERROR: It appears your subtitles are not saved.",true) end
+	
+	text1="core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
+	text1=text1.."core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
+	root_path1=string.match(res.vsf,"[^\\]+")
+	
 	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or (res.vtype==".mp4" and res.GPUs=="ffmpeg(double mp4)") then 
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(res.first)..")\n"	vsm=2
 	elseif res.filter1=="vsfilter" then
-		-- text1="core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
 		text1="clip=core.vsf.TextSub(clip,r"..quo(res.first)..")\n"	vsm=1
 	else
 		text1=""
@@ -311,7 +320,11 @@ function encode_vs(subs,sel)
 		end
 	else comment="" dummy_vs_code="" color_change=""
 	end
-	vs="import vapoursynth as vs\ncore=vs.get_core()\n"..dummy_vs_code..comment.."clip=core.ffms2.Source(r"..quo(vfull)..")\n"..text1..text2..color_change..trim.."\nclip.set_output()"
+	if source_filter=="ffms2" then
+		vs="import vapoursynth as vs\ncore=vs.get_core()\n"..dummy_vs_code..comment.."clip=core.ffms2.Source(r"..quo(vfull)..")\n"..text1..text2..color_change..trim.."\nclip.set_output()"
+	else
+		vs="import vapoursynth as vs\ncore=vs.get_core()\n"..dummy_vs_code..comment.."clip=core.lsmas.LWLibavSource(r"..quo(vfull)..")\n"..text1..text2..color_change..trim.."\nclip.set_output()"
+	end
 	if scriptpath=="?script\\" then scriptpath=vpath end
 	local vsfile=io.open(scriptpath.."hardsub.vpy","w")
 	vsfile:write(vs)
@@ -327,7 +340,7 @@ function encode_vs(subs,sel)
 	end
 	
 	--avisynth for ffmpeg to generate mov
-	if (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or res.GPUs=="ffmpeg(double mp4)" then  --only use avs for encoding transparent mov (ProRes)
+	if (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or res.GPUs=="ffmpeg(double mp4)" then  --only use avs for encoding transparent mov or double mp4
 		if res.audio then t_error("Audio will not be processed in this mod.",false) end
 		if res.ffmpegpath=="" then t_error("Please check your ffmpeg.",true) end
 		local xres, yres, ar, artype = aegisub.video_size()
@@ -340,10 +353,7 @@ function encode_vs(subs,sel)
 						   {x=1,y=2,class="label",label="30000/1001 = 29.97"},
 						   {x=1,y=3,class="label",label="60000/1001 = 59.94"}}
 			fps_btn,fps_res=ADD(framerate_gui,{"OK","Cancel"})
-			if fps_btn=="Cancel" then 
-				os.execute('del '..quo(temp_sub_name1))
-				ak()
-			end
+			if fps_btn=="Cancel" then ak() end
 			loadstring("framerate="..fps_res.fps)()
 			if type(framerate)~="number" then
 				t_error("Invalid value for frame rate.",true)
@@ -362,10 +372,7 @@ function encode_vs(subs,sel)
 			framen_gui={{x=0,y=0,class="label",label="Frame Number to Encode"},
 						   {x=0,y=1,class="intedit",name="framen",value=approx_len}}
 			frn_btn,frn_res=ADD(framen_gui,{"OK","Cancel"})
-			if frn_btn=="Cancel" then 
-				os.execute('del '..quo(temp_sub_name1))
-				ak()
-			end
+			if frn_btn=="Cancel" then ak() end
 			enc_frame_n=frn_res.framen
 			encname=encname.."_0-"..frn_res.framen
 		else
@@ -373,10 +380,10 @@ function encode_vs(subs,sel)
 		end
 		if res.filter1=="vsfilter" then
 			avs="LoadPlugin("..quo(res.vsf)..")\n"
-			avs=avs.."MaskSub("..quo(temp_sub_name1)..string.format(",%d,%d,%.3f,%d",xres,yres,framerate,enc_frame_n)..").FlipVertical()\n" 			
+			avs=avs.."MaskSub("..quo(res.first)..string.format(",%d,%d,%.3f,%d",xres,yres,framerate,enc_frame_n)..").FlipVertical()\n" 			
 		elseif res.filter1=="vsfiltermod" then
 			avs="LoadPlugin("..quo(res.vsfm)..")\n"
-			avs=avs.."MaskSubMod("..quo(temp_sub_name1)..string.format(",%d,%d,%.3f,%d",xres,yres,framerate,enc_frame_n)..").FlipVertical()\n"
+			avs=avs.."MaskSubMod("..quo(res.first)..string.format(",%d,%d,%.3f,%d",xres,yres,framerate,enc_frame_n)..").FlipVertical()\n"
 		else
 			avs=""
 		end
@@ -395,19 +402,13 @@ function encode_vs(subs,sel)
 						{x=0,y=3,width=2,height=2,class="label",label="qtrle - fast, lossless, small size. \nSupported by Premiere Pro before CC2018."},
 						{x=0,y=5,width=2,height=2,class="label",label="png - slow, lossless, big size. \nGood compatibility."}}
 			mov_btn,mov_enc_res=ADD(rle_or_png,{"OK","Cancel"})
-			if mov_btn=="Cancel" then 
-				os.execute('del '..quo(temp_sub_name1))
-				ak()
-			end
+			if mov_btn=="Cancel" then ak() end
 		elseif res.GPUs=="ffmpeg(double mp4)" then
 			mp4quality={{x=0,y=0,width=2,class="label",label="Choose the quality of mp4 file."},
 						{x=0,y=1,class="dropdown",name="mp4quality",value="Medium",items={"High","Medium","Low"}},
 						{x=0,y=3,width=2,height=2,class="label",label="High - yuv444p\nMedium - yuv422p\nBase - yuv420p"},}
 			mp4_btn,mp4_enc_res=ADD(mp4quality,{"OK","Cancel"})
-			if mp4_btn=="Cancel" then 
-				os.execute('del '..quo(temp_sub_name1))
-				ak()
-			end
+			if mp4_btn=="Cancel" then ak() end
 		end
 		if res.GPUs=="ffmpeg(double mp4)" then
 			preset ={['High']='yuv444p',['Medium']='yuv422p',['Low']='yuv420p'}
@@ -481,12 +482,12 @@ function encode_vs(subs,sel)
 	end
 	
 	if (res.GPUs=="ffmpeg(mov with alpha)" and res.vtype~=".mov(+alpha)") or (res.GPUs~="ffmpeg(mov with alpha)" and res.vtype==".mov(+alpha)") then
-		t_error("ffmpeg works for mov.",true)
+		t_error("ffmpeg works for mov.",false)
 	end
 	if (res.GPUs=="ffmpeg(double mp4)" and res.vtype~=".mp4") then
-		t_error("mp4 is required.",true)
+		t_error("mp4 is required.",false)
 	end
-	
+	source_filter = res.sourcefilter
 	exe=res.GPUs
 	enc_bat_set=ADP("?user").."\\enc_set_"..exe..".conf"
 	file=io.open(enc_bat_set)
