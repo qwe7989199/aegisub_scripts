@@ -222,7 +222,7 @@ function encode_vs(subs,sel)
 		if err==nil then
 			gui("vsfm",NegaEncLib.."\\vapoursynth64\\plugins\\VSFilterMod.dll")
 		else
-			vsf_path=ADO("vsfiltermod","",scriptpath,"*.dll",false,true)
+			vsfm_path=ADO("vsfiltermod","",scriptpath,"*.dll",false,true)
 			gui("vsfm",vsfm_path)
 		end
 	end
