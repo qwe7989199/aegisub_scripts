@@ -665,7 +665,7 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.cancel()
 		end
 	elseif exe=="NVEnc" and not first_time then
-		if nvencpath=="" then t_error("Please check your NVEnc.",true) end
+		if res.nvencpath=="" then t_error("Please check your NVEnc.",true) end
 		bat_code=quo(nvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbrhq "..NVbitrate.." --preset "..NVpreset.." "..NV_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 		
@@ -689,7 +689,7 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.cancel()
 		end
 	elseif exe=="QSVEnc" and not first_time then
-		if qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
+		if res.qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
 		if QSVmode=="VBR" then
 			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..QSVbitrate.." --quality "..QSVpreset.." "..QSV_other_para.." -o "..quo(target..encname..res.vtype)
 		elseif QSVmode=="ICQ" then
@@ -715,7 +715,7 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.cancel()
 		end
 	elseif exe=="VCEEnc" and not first_time then
-		if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
+		if res.vceencpath=="" then t_error("Please check your VCEEnc.",true) end
 		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..VCE_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 	return bat_code
