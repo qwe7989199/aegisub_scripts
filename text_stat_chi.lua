@@ -181,4 +181,4 @@ function k_stat(text,i)
 	return BoundaryKDurOfLine
 end
 
-aegisub.register_macro(script_name, script_description,text_stat)
+aegisub.register_macro("文本工具/"..script_name, script_description,text_stat)

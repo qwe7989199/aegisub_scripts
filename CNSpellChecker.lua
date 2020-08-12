@@ -2,7 +2,7 @@ local tr = aegisub.gettext
 script_name = tr"文本纠错"
 script_description = tr"利用百度的API进行文本纠错"
 script_author = "domo"
-script_version = "0.2"
+script_version = "0.3"
 
 local request = require('luajit-request')
 local json = require('json')
@@ -15,7 +15,7 @@ void Sleep(int ms);
 ]]
 
 -- Necessary
-local AccessToken = 
+local AccessToken = ""
 
 function split(str, split_char)
 	local sub_str_tab = {}
@@ -128,9 +128,9 @@ function checkText(subtitles,selected_lines)
 			orgText = ""
 			requestNum = requestNum + 1					--请求计数+1
 		else
-			showSuggestion(l.text,i-dialogue_start+1) --请求api给出建议
+			showSuggestion(l.text,i-dialogue_start+1)
 			C.Sleep(250)
-			requestNum = requestNum + 1					--请求计数+1
+			requestNum = requestNum + 1
 		end
 		aegisub.progress.set(z/#selected_lines*100)
 		aegisub.progress.task("已处理到第"..tostring(selected_lines[z]-dialogue_start+1).."行")
@@ -143,4 +143,4 @@ function checkText(subtitles,selected_lines)
 	end
 end
 
-aegisub.register_macro(script_name, script_description, checkText)
+aegisub.register_macro("文本工具/"..script_name, script_description, checkText)
