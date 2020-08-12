@@ -31,12 +31,6 @@
 一些简单的检查函数，检查并输出模板行和fx行中的一些显著错误/标签冲突。  
 忽略了code block和大多数的参数检查。  
 
-## Text_Stat(\_chi).lua    
-获取文本统计信息，例如单词数量，行持续时间等。  
-可以把统计结果输出为单独文件。  
-你可以把它当作是一个学习 _lua pattern_, _unicode(UTF-8)_, _Aegisub 对话框 API_, 和 _文件操作_ 的范例。  
- _chi_ 后缀是中文版本。  
-
 ## text to qrcode.lua    
 依赖：github.com/speedata/luaqrcode/blob/master/qrencode.lua  
 将行内文字转化成二维码(QRCode).  
@@ -52,6 +46,20 @@
 依赖:https://github.com/rxi/json.lua  
 把Bilibili的CC字幕格式转换成ASS字幕格式.  
 
-## CNSpellChecker.lua   
+## 文本工具   
+### CNSpellChecker.lua   
 依赖:https://github.com/rxi/json.lua 和 https://github.com/LPGhatguy/luajit-request    
-利用百度的NLP相关API，对中文进行错误检查。   
+利用百度的NLP相关API，对中文进行错误检查。 
+
+### Text_Stat(\_chi).lua    
+获取文本统计信息，例如单词数量，行持续时间等。  
+可以把统计结果输出为单独文件。  
+你可以把它当作是一个学习 _lua pattern_, _unicode(UTF-8)_, _Aegisub 对话框 API_, 和 _文件操作_ 的范例。  
+ _chi_ 后缀是中文版本。  
+ 
+### caiyun_trans.lua    
+彩云小译插件。  
+无视行内标签，翻译文本(中英日支持)  
+
+
+
