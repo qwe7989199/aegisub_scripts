@@ -391,7 +391,7 @@ function encode_vs(subs,sel)
 		if res.trim then
 			avs=avs..string.format("Trim(%d,0)\n",res.sf)
 		end
-		aegisub.debug.out(scriptpath)
+		--aegisub.debug.out(scriptpath)
 		avsfile=io.open(scriptpath.."sub_alpha.avs","w")
 		avsfile:write(avs.."assumefps("..framerate..")\n")
 		avsfile:close()
