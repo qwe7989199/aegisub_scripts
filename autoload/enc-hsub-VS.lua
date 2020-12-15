@@ -291,8 +291,6 @@ function encode_vs(subs,sel)
 	
 	text1="core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
 	text1=text1.."core.std.LoadPlugin(path=r"..quo(res.vsf)..")\n"
-	root_path1=string.match(res.vsf,"[^\\]+")
-	
 	if res.filter1=="vsfiltermod" or (res.vtype==".mov(+alpha)" and res.GPUs=="ffmpeg(mov with alpha)") or (res.vtype==".mp4" and res.GPUs=="ffmpeg(double mp4)") then 
 		text1="clip=core.vsfm.TextSubMod(clip,r"..quo(res.first)..")\n"	vsm=2
 	elseif res.filter1=="vsfilter" then
@@ -393,7 +391,8 @@ function encode_vs(subs,sel)
 		if res.trim then
 			avs=avs..string.format("Trim(%d,0)\n",res.sf)
 		end
-		avsfile=io.open(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs","w")
+		aegisub.debug.out(scriptpath)
+		avsfile=io.open(scriptpath.."sub_alpha.avs","w")
 		avsfile:write(avs.."assumefps("..framerate..")\n")
 		avsfile:close()
 		if res.GPUs=="ffmpeg(mov with alpha)" then
@@ -413,15 +412,15 @@ function encode_vs(subs,sel)
 		if res.GPUs=="ffmpeg(double mp4)" then
 			preset ={['High']='yuv444p',['Medium']='yuv422p',['Low']='yuv420p'}
 			quality = mp4_enc_res.mp4quality
-			bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -r "..framerate.." -vsync cfr -filter_complex split[v1][v2];[v2]alphaextract[o2];[v1]format="..preset[quality].."[o1] -map [o1] -g 1 "..quo(target..encname.."_sub.mp4").." -map [o2] -g 1 "..quo(target..encname.."_alpha.mp4")
+			bat_code=quo(ffmpegpath).." -i "..quo(scriptpath.."sub_alpha.avs").." -an -r "..framerate.." -vsync cfr -filter_complex split[v1][v2];[v2]alphaextract[o2];[v1]format="..preset[quality].."[o1] -map [o1] -g 1 "..quo(target..encname.."_sub.mp4").." -map [o2] -g 1 "..quo(target..encname.."_alpha.mp4")
 		else
 			if mov_enc_res.mov_encoder=="qtrle" then
-				bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
+				bat_code=quo(ffmpegpath).." -i "..quo(scriptpath.."sub_alpha.avs").." -an -c:v qtrle -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
 			else
-				bat_code=quo(ffmpegpath).." -i "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
+				bat_code=quo(ffmpegpath).." -i "..quo(scriptpath.."sub_alpha.avs").." -an -c:v png -r "..framerate.." -vsync cfr "..quo(target..encname..".mov")
 			end
 		end
-		if res.delavs then bat_code=bat_code.."\ndel "..quo(root_path1.."\\aeg_encode_tmp\\sub_alpha.avs") end
+		if res.delavs then bat_code=bat_code.."\ndel "..quo(scriptpath.."sub_alpha.avs") end
 	end
 
 	--NeroAAC
@@ -689,7 +688,7 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.cancel()
 		end
 	elseif exe=="QSVEnc" and not first_time then
-		if res.qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
+		if qsvencpath=="" then t_error("Please check your QSVEnc.",true) end
 		if QSVmode=="VBR" then
 			bat_code=quo(qsvencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..QSVbitrate.." --quality "..QSVpreset.." "..QSV_other_para.." -o "..quo(target..encname..res.vtype)
 		elseif QSVmode=="ICQ" then
@@ -715,7 +714,7 @@ function encode_bat(exe,first_time,from_setting)
 			aegisub.cancel()
 		end
 	elseif exe=="VCEEnc" and not first_time then
-		if res.vceencpath=="" then t_error("Please check your VCEEnc.",true) end
+		if vceencpath=="" then t_error("Please check your VCEEnc.",true) end
 		bat_code=quo(vceencpath).." -i "..quo(scriptpath.."hardsub.vpy").." --vpy --vbr "..VCEbitrate.." --quality "..VCEpreset.." "..VCE_other_para.." -o "..quo(target..encname..res.vtype)
 	end
 	return bat_code
