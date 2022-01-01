@@ -23,6 +23,9 @@ Under such condition, the full-width blank should be given a separated K tag.
 ## Time Scaler.lua  
 You can use this if only BPM changed.  
 
+## HDRifySub.lua    
+Change color based on PQ(ST2084) curve to adapt subtitle which is under SDR, to HDR videos.   
+
 ## delete_fx.lua  
 A very simple script to remove fx lines after sorting by effect.   
   
