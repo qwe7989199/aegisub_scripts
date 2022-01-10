@@ -2,10 +2,12 @@ local tr = aegisub.gettext
 script_name = tr"文本统计"
 script_description = tr"对所选行进行文本统计"
 script_author = "domo"
-script_version = "1.0"
+script_version = "1.02"
 
 include("unicode.lua")
 k_threshold=1
+punc = "！？｡。＂＃＄％＆＇（）＊＋，－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》「」『』【】〔〕〖〗〘〙〚〛〜〝〞〟〰〾〿–—‘’‛“”„‟…‧﹏.　"
+
 
 function text_stat(subtitles, selected_lines, active_line)
 	for i=1,#subtitles do
@@ -17,7 +19,8 @@ function text_stat(subtitles, selected_lines, active_line)
 	TotalLineNum=#selected_lines
 	TotalKNum=0      
 	EngWordsNum=0	   
-	NonEngCharsNum=0   
+	NonEngCharsNum=0
+	NonEngCharsNumWithoutPunctuation=0
 	SpaceNum=0		   
 	MaxLineDuration=0
 	MaxDurationIndex=0
@@ -67,6 +70,9 @@ function text_stat(subtitles, selected_lines, active_line)
 			--Non English words number
 			for utf8char in string.gmatch(text_stripped,"[%z\194-\244][\128-\191]*") do
 				NonEngCharsNum=NonEngCharsNum+1
+				if not punc:match(utf8char) then
+					NonEngCharsNumWithoutPunctuation=NonEngCharsNumWithoutPunctuation+1
+				end
 			end
 			--Max Line length
 			LineLength[i]=unicode.len(text_stripped)
@@ -95,7 +101,7 @@ function text_stat(subtitles, selected_lines, active_line)
 			MaxLineDuration=v
 			MaxDurationIndex=i-dialogue_start+1
 		end
-		if v<=MinLineDuration and v>0 then
+		if v<=MinLineDuration and v>=0 then
 			MinLineDuration=v
 			MinDurationIndex=i-dialogue_start+1
 		end
@@ -129,11 +135,12 @@ function show_result()
 	{x=0, y=1, class="label", label="　　已选择的行数: "..TotalLineNum},
 	{x=0, y=2, class="label", label="　　总持续时间: "..TotalDuration.." (秒)"},
 	{x=0, y=3, class="label", label="　　总音节数: "..TotalKNum},
-	{x=0, y=4, class="label", label="　　总字数(含空格): "..TotalWordsNum},
-	{x=0, y=5, class="label", label="　　英文字数: "..EngWordsNum},
-	{x=0, y=6, class="label", label="　　非英文字数: "..NonEngCharsNum},
-	{x=0, y=7, class="label", label="　　半角空格数: "..SpaceNum-fullWidthSpaceNum},
-	{x=0, y=8, class="label", label="　　全角空格数: "..fullWidthSpaceNum},
+	{x=0, y=4, class="label", label="　　总单词数(不含空格): "..TotalWordsNum},
+	{x=0, y=5, class="label", label="　　英文词数: "..EngWordsNum},
+	{x=0, y=6, class="label", label="　　非英文词数: "..NonEngCharsNum},
+	{x=0, y=7, class="label", label="　　非英文词数(不含标点): "..NonEngCharsNumWithoutPunctuation},	
+	{x=0, y=8, class="label", label="　　半角空格数: "..SpaceNum-fullWidthSpaceNum},
+	{x=0, y=9, class="label", label="　　全角空格数: "..fullWidthSpaceNum},
 
 	{x=1, y=1, width=15, class="label", label="　　字符最多的行: "..MaxLineLength.."        | 行号: "..MaxLengthIndex},
 	{x=1, y=2, width=15, class="label", label="　　字符少的行: "..MinLineLength.."          | 行号: "..MinLengthIndex},
@@ -152,9 +159,10 @@ function show_result()
 		.."已选择的行数,"..TotalLineNum.."\n"
 		.."总持续时间,"..TotalDuration.."\n"
 		.."总音节数,"..TotalKNum.."\n"
-		.."总字数(含空格),"..TotalWordsNum.."\n"
+		.."总字数(不含空格),"..TotalWordsNum.."\n"
 		.."英文字数,"..EngWordsNum.."\n"
 		.."非英文字数,"..NonEngCharsNum.."\n"
+		.."非英文词数(不含标点),"..NonEngCharsNumWithoutPunctuation.."\n"
 		.."半角空格数,"..SpaceNum-fullWidthSpaceNum.."\n"
 		.."全角空格数,"..fullWidthSpaceNum.."\n"
 		.."字符最多的行,"..MaxLineLength..",行号,"..MaxLengthIndex.."\n"
