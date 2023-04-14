@@ -21,7 +21,8 @@ Under such condition, the full-width blank should be given a separated K tag.
 2.Normally, the last syl of a line should not be blank.  
 
 ## Time Scaler.lua  
-You can use this if only BPM changed.  
+case 1. Keep ass file usability while converting NTSC 24p to PAL 25p (speed up).  
+case 2. You can use this on a song lyric file if only BPM changed.  
 
 ## HDRifySub.lua    
 Change color based on PQ(ST2084) curve to adapt subtitle which is under SDR, to HDR videos.   
